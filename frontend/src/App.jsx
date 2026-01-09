@@ -21,6 +21,9 @@ import {
   useSounds,
   CurrencySelector,
   ExchangeRateDisplay,
+  PWAInstallPrompt,
+  OfflineIndicator,
+  UpdateAvailable,
 } from './components';
 import { useApiHealth, useSimulation } from './hooks/useApi';
 import useStore from './store/useStore';
@@ -287,6 +290,11 @@ function AppContent() {
           <MemberDetail member={selectedMember} onClose={() => setSelectedMember(null)} />
         )}
       </AnimatePresence>
+
+      {/* PWA Components */}
+      <OfflineIndicator />
+      <UpdateAvailable />
+      <PWAInstallPrompt />
     </div>
   );
 }

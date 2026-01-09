@@ -26,3 +26,5 @@ export { default as PDFReportGenerator } from './PDFReportGenerator';
 export { default as SoundSettings, SoundProvider, useSounds } from './SoundSystem';
 export { default as CurrencySelector } from './CurrencySelector';
 export { default as ExchangeRateDisplay } from './ExchangeRateDisplay';
+export { default as PWAInstallPrompt } from './PWAInstallPrompt';
+export { default as OfflineIndicator, UpdateAvailable } from './OfflineIndicator';

@@ -2,25 +2,116 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/seedling.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Seedling - Visualize how your financial decisions today ripple through generations. The Generational Wealth Time Machine." />
-    <meta name="keywords" content="generational wealth, compound interest, financial planning, wealth simulator, family tree, investment calculator" />
-    <meta property="og:title" content="Seedling - Generational Wealth Time Machine" />
-    <meta property="og:description" content="Visualize how your financial decisions today ripple through generations." />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://seedling-1m8.pages.dev" />
-    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+
+    <!-- Primary Meta Tags -->
     <title>Seedling - Generational Wealth Time Machine</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta name="title" content="Seedling - Generational Wealth Time Machine" />
+    <meta name="description" content="Visualize how your financial decisions today ripple through generations. See your family tree grow with the power of compound interest." />
+    <meta name="keywords" content="generational wealth, compound interest, financial planning, wealth simulator, family tree, investment calculator, PWA" />
+    <meta name="author" content="Seedling" />
+
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#10b981" />
+    <meta name="background-color" content="#0f172a" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Seedling" />
+    <meta name="application-name" content="Seedling" />
+    <meta name="msapplication-TileColor" content="#10b981" />
+    <meta name="msapplication-config" content="/browserconfig.xml" />
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="mask-icon" href="/icons/icon.svg" color="#10b981" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://seedling-1m8.pages.dev/" />
+    <meta property="og:title" content="Seedling - Generational Wealth Time Machine" />
+    <meta property="og:description" content="Visualize how your financial decisions today ripple through generations. See your family tree grow with the power of compound interest." />
+    <meta property="og:image" content="https://seedling-1m8.pages.dev/screenshots/desktop.png" />
+    <meta property="og:image:width" content="1280" />
+    <meta property="og:image:height" content="720" />
+    <meta property="og:site_name" content="Seedling" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://seedling-1m8.pages.dev/" />
+    <meta name="twitter:title" content="Seedling - Generational Wealth Time Machine" />
+    <meta name="twitter:description" content="Visualize how your financial decisions today ripple through generations." />
+    <meta name="twitter:image" content="https://seedling-1m8.pages.dev/screenshots/desktop.png" />
+
+    <!-- Preconnect to external resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://api.frankfurter.app" />
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <!-- DNS Prefetch for performance -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://api.frankfurter.app" />
+    <link rel="dns-prefetch" href="https://ipapi.co" />
   </head>
   <body class="bg-slate-900">
-    <div id="root"></div>
+    <!-- App Loading State (shown before React hydrates) -->
+    <div id="root">
+      <div id="app-loader" style="
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        z-index: 9999;
+      ">
+        <svg width="80" height="80" viewBox="0 0 512 512" style="animation: pulse 2s ease-in-out infinite;">
+          <defs>
+            <linearGradient id="loaderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#10b981"/>
+              <stop offset="100%" style="stop-color:#059669"/>
+            </linearGradient>
+          </defs>
+          <rect width="512" height="512" rx="96" fill="#1e293b"/>
+          <path d="M256 395 Q256 300 256 220" stroke="url(#loaderGrad)" stroke-width="16" fill="none" stroke-linecap="round"/>
+          <path d="M256 280 Q200 240 180 180 Q220 200 256 240" fill="url(#loaderGrad)"/>
+          <path d="M256 260 Q312 220 332 160 Q292 180 256 220" fill="url(#loaderGrad)"/>
+          <path d="M256 220 Q256 140 256 100 Q300 140 300 180 Q280 160 256 180 Q232 160 212 180 Q212 140 256 100" fill="url(#loaderGrad)"/>
+        </svg>
+        <div style="
+          margin-top: 24px;
+          color: #10b981;
+          font-family: 'Inter', system-ui, sans-serif;
+          font-size: 24px;
+          font-weight: 700;
+          letter-spacing: -0.5px;
+        ">Seedling</div>
+        <div style="
+          margin-top: 8px;
+          color: #64748b;
+          font-family: 'Inter', system-ui, sans-serif;
+          font-size: 14px;
+        ">Loading your wealth journey...</div>
+      </div>
+    </div>
+
+    <style>
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.05); opacity: 0.8; }
+      }
+    </style>
+
     <script type="module" src="/src/main.jsx"></script>
 
-    <!-- Cloudflare Web Analytics (replace BEACON_TOKEN after setup in CF dashboard) -->
+    <!-- Cloudflare Web Analytics -->
     <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "YOUR_BEACON_TOKEN"}'></script>
   </body>
 </html>
