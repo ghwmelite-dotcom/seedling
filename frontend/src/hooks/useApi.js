@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const API_URL = '/api';
+// Use Cloudflare Workers API in production, local API in development
+const API_URL = import.meta.env.PROD
+  ? 'https://seedling-api.ghwmelite.workers.dev/api'
+  : '/api';
 
 // Custom hook for API health check
 export const useApiHealth = () => {
