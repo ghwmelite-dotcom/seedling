@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌱 Seedling - Generational Wealth Time Machine</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            min-height: 100vh;
+        }
+        
+        .tree-container {
+            position: relative;
+            overflow: auto;
+        }
+        
+        .tree-node {
+            transition: all 0.3s ease;
+        }
+        
+        .tree-node:hover {
+            transform: scale(1.05);
+            z-index: 10;
+        }
+        
+        .branch-line {
+            stroke-linecap: round;
+            transition: stroke-width 0.3s ease;
+        }
+        
+        .glow-green {
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+        }
+        
+        .glow-red {
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 12px;
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .tooltip.visible {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect, useCallback, useMemo, useRef } = React;
+        
+        // API base URL
+        const API_URL = 'http://localhost:8000/api';
+        
+        // Format currency
+        const formatCurrency = (value) => {
+            if (value >= 1000000) {
+                return `$${(value / 1000000).toFixed(1)}M`;
+            } else if (value >= 1000) {
+                return `$${(value / 1000).toFixed(0)}K`;
+            }
+            return `$${value.toFixed(0)}`;
+        };
+        
+        // Format percentage
+        const formatPercent = (value) => `${(value * 100).toFixed(0)}%`;
+        
+        // Health status colors
+        const healthColors = {
+            thriving: { bg: 'bg-green-500/20', border: 'border-green-500', text: 'text-green-400' },
+            stable: { bg: 'bg-lime-500/20', border: 'border-lime-500', text: 'text-lime-400' },
+            struggling: { bg: 'bg-amber-500/20', border: 'border-amber-500', text: 'text-amber-400' },
+            distressed: { bg: 'bg-red-500/20', border: 'border-red-500', text: 'text-red-400' },
+        };
+        
+        // Tree Node Component
+        const TreeNode = ({ member, isScenario, onClick, selected }) => {
+            const colors = healthColors[member.financialHealth] || healthColors.stable;
+            
+            return (
+                <div 
+                    className={`tree-node relative cursor-pointer rounded-lg p-3 border-2 ${colors.bg} ${colors.border} 
+                        ${selected ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-900' : ''}`}
+                    onClick={() => onClick(member)}
+                    style={{
+                        minWidth: '140px',
+                        opacity: 0.3 + member.branchThickness * 0.7
+                    }}
+                >
+                    <div className="text-center">
+                        <div className="text-2xl mb-1">
+                            {member.generation === 0 ? '👤' : 
+                             member.ownsHome ? '🏠' : 
+                             member.financialHealth === 'thriving' ? '🌟' : 
+                             member.financialHealth === 'distressed' ? '⚠️' : '👤'}
+                        </div>
+                        <div className="text-white font-medium text-sm truncate">{member.name}</div>
+                        <div className={`text-xs ${colors.text}`}>Gen {member.generation + 1}</div>
+                        <div className="text-white font-bold mt-1">{formatCurrency(member.netWorth)}</div>
+                        <div className="text-slate-400 text-xs">Age {member.currentAge}</div>
+                    </div>
+                    
+                    {/* Branch thickness indicator */}
+                    <div 
+                        className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 rounded-full"
+                        style={{
+                            width: `${Math.max(4, member.branchThickness * 20)}px`,
+                            height: `${Math.max(4, member.branchThickness * 20)}px`,
+                            backgroundColor: member.branchColor
+                        }}
+                    />
+                </div>
+            );
+        };
+        
+        // Family Tree Visualization
+        const FamilyTree = ({ root, title, isScenario, onSelectMember, selectedMember }) => {
+            if (!root) return null;
+            
+            // Flatten tree by generation
+            const generations = useMemo(() => {
+                const gens = [];
+                const traverse = (node, gen) => {
+                    if (!gens[gen]) gens[gen] = [];
+                    gens[gen].push(node);
+                    (node.children || []).forEach(child => traverse(child, gen + 1));
+                };
+                traverse(root, 0);
+                return gens;
+            }, [root]);
+            
+            return (
+                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                    <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isScenario ? 'text-green-400' : 'text-blue-400'}`}>
+                        {isScenario ? '🌱' : '📊'} {title}
+                    </h3>
+                    
+                    <div className="tree-container space-y-8">
+                        {generations.map((gen, genIndex) => (
+                            <div key={genIndex} className="relative">
+                                <div className="absolute -left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-medium writing-mode-vertical transform -rotate-90 w-20 text-center">
+                                    Gen {genIndex + 1}
+                                </div>
+                                <div className="flex flex-wrap justify-center gap-4 pl-8">
+                                    {gen.map(member => (
+                                        <TreeNode 
+                                            key={member.id}
+                                            member={member}
+                                            isScenario={isScenario}
+                                            onClick={onSelectMember}
+                                            selected={selectedMember?.id === member.id}
+                                        />
+                                    ))}
+                                </div>
+                                
+                                {/* Generation divider */}
+                                {genIndex < generations.length - 1 && (
+                                    <div className="flex justify-center mt-4">
+                                        <div className="w-px h-8 bg-gradient-to-b from-slate-600 to-transparent" />
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+        
+        // Member Detail Panel
+        const MemberDetail = ({ member, onClose }) => {
+            if (!member) return null;
+            
+            const colors = healthColors[member.financialHealth] || healthColors.stable;
+            
+            return (
+                <div className="fixed inset-y-0 right-0 w-96 bg-slate-800 border-l border-slate-700 p-6 overflow-y-auto slide-in z-50">
+                    <button 
+                        onClick={onClose}
+                        className="absolute top-4 right-4 text-slate-400 hover:text-white"
+                    >
+                        ✕
+                    </button>
+                    
+                    <div className="text-center mb-6">
+                        <div className="text-4xl mb-2">
+                            {member.ownsHome ? '🏠' : '👤'}
+                        </div>
+                        <h3 className="text-2xl font-bold text-white">{member.name}</h3>
+                        <p className="text-slate-400">Generation {member.generation + 1} • Age {member.currentAge}</p>
+                        <div className={`inline-block px-3 py-1 rounded-full text-sm mt-2 ${colors.bg} ${colors.text}`}>
+                            {member.financialHealth.charAt(0).toUpperCase() + member.financialHealth.slice(1)}
+                        </div>
+                    </div>
+                    
+                    {/* Financial Summary */}
+                    <div className="space-y-4 mb-6">
+                        <div className="bg-slate-900/50 rounded-lg p-4">
+                            <div className="text-slate-400 text-sm">Net Worth</div>
+                            <div className="text-3xl font-bold text-white">{formatCurrency(member.netWorth)}</div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="bg-slate-900/50 rounded-lg p-3">
+                                <div className="text-slate-400 text-xs">Income</div>
+                                <div className="text-lg font-semibold text-white">{formatCurrency(member.income)}/yr</div>
+                            </div>
+                            <div className="bg-slate-900/50 rounded-lg p-3">
+                                <div className="text-slate-400 text-xs">Savings</div>
+                                <div className="text-lg font-semibold text-green-400">{formatCurrency(member.savings)}</div>
+                            </div>
+                            <div className="bg-slate-900/50 rounded-lg p-3">
+                                <div className="text-slate-400 text-xs">Investments</div>
+                                <div className="text-lg font-semibold text-blue-400">{formatCurrency(member.investments)}</div>
+                            </div>
+                            <div className="bg-slate-900/50 rounded-lg p-3">
+                                <div className="text-slate-400 text-xs">Debt</div>
+                                <div className="text-lg font-semibold text-red-400">{formatCurrency(member.debt)}</div>
+                            </div>
+                        </div>
+                        
+                        {member.homeEquity > 0 && (
+                            <div className="bg-slate-900/50 rounded-lg p-3">
+                                <div className="text-slate-400 text-xs">Home Equity</div>
+                                <div className="text-lg font-semibold text-purple-400">{formatCurrency(member.homeEquity)}</div>
+                            </div>
+                        )}
+                        
+                        {member.inheritanceReceived > 0 && (
+                            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+                                <div className="text-amber-400 text-xs">Inheritance Received</div>
+                                <div className="text-lg font-semibold text-amber-400">{formatCurrency(member.inheritanceReceived)}</div>
+                            </div>
+                        )}
+                    </div>
+                    
+                    {/* Life Events */}
+                    {member.lifeEvents && member.lifeEvents.length > 0 && (
+                        <div className="mb-6">
+                            <h4 className="text-white font-semibold mb-3 flex items-center gap-2">
+                                📅 Life Events
+                            </h4>
+                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                                {member.lifeEvents.map((event, idx) => (
+                                    <div key={idx} className="bg-slate-900/50 rounded-lg p-3 text-sm">
+                                        <div className="flex justify-between items-start">
+                                            <span className="text-white">{event.description}</span>
+                                            <span className="text-slate-500 text-xs">Age {event.age}</span>
+                                        </div>
+                                        {event.financialImpact !== 0 && (
+                                            <div className={`text-xs mt-1 ${event.financialImpact > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                                {event.financialImpact > 0 ? '+' : ''}{formatCurrency(event.financialImpact)}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    
+                    {/* Children */}
+                    {member.children && member.children.length > 0 && (
+                        <div>
+                            <h4 className="text-white font-semibold mb-3 flex items-center gap-2">
+                                👨‍👩‍👧‍👦 Children ({member.children.length})
+                            </h4>
+                            <div className="space-y-2">
+                                {member.children.map(child => (
+                                    <div key={child.id} className="bg-slate-900/50 rounded-lg p-3 flex justify-between items-center">
+                                        <span className="text-white">{child.name}</span>
+                                        <span className={healthColors[child.financialHealth]?.text || 'text-slate-400'}>
+                                            {formatCurrency(child.netWorth)}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+        
+        // Comparison Summary
+        const ComparisonSummary = ({ summary }) => {
+            if (!summary) return null;
+            
+            const diff = summary.difference;
+            const isPositive = diff.totalNetWorth > 0;
+            
+            return (
+                <div className="bg-gradient-to-r from-slate-800 to-slate-800/50 rounded-xl p-6 border border-slate-700">
+                    <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                        📊 Impact Analysis
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {/* Total Difference */}
+                        <div className={`rounded-xl p-4 ${isPositive ? 'bg-green-500/10 border border-green-500/30' : 'bg-red-500/10 border border-red-500/30'}`}>
+                            <div className="text-slate-400 text-sm">Family Wealth Difference</div>
+                            <div className={`text-3xl font-bold ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
+                                {isPositive ? '+' : ''}{formatCurrency(diff.totalNetWorth)}
+                            </div>
+                            <div className={`text-sm ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
+                                {isPositive ? '+' : ''}{diff.percentChange.toFixed(1)}% across all generations
+                            </div>
+                        </div>
+                        
+                        {/* Baseline Total */}
+                        <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
+                            <div className="text-slate-400 text-sm">Baseline Family Wealth</div>
+                            <div className="text-2xl font-bold text-blue-400">
+                                {formatCurrency(summary.baseline.totalNetWorth)}
+                            </div>
+                            <div className="text-slate-400 text-sm">
+                                {summary.baseline.totalMembers} family members
+                            </div>
+                        </div>
+                        
+                        {/* Scenario Total */}
+                        <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4">
+                            <div className="text-slate-400 text-sm">Scenario Family Wealth</div>
+                            <div className="text-2xl font-bold text-green-400">
+                                {formatCurrency(summary.scenario.totalNetWorth)}
+                            </div>
+                            <div className="text-slate-400 text-sm">
+                                {summary.scenario.totalMembers} family members
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Generation Breakdown */}
+                    <div className="mt-6">
+                        <h4 className="text-white font-semibold mb-3">By Generation</h4>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="text-slate-400 border-b border-slate-700">
+                                        <th className="text-left py-2">Generation</th>
+                                        <th className="text-right py-2">Baseline Avg</th>
+                                        <th className="text-right py-2">Scenario Avg</th>
+                                        <th className="text-right py-2">Difference</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {summary.baseline.byGeneration.map((baseGen, idx) => {
+                                        const scenGen = summary.scenario.byGeneration[idx] || { avgNetWorth: 0 };
+                                        const diff = scenGen.avgNetWorth - baseGen.avgNetWorth;
+                                        return (
+                                            <tr key={idx} className="border-b border-slate-700/50">
+                                                <td className="py-2 text-white">Gen {idx + 1}</td>
+                                                <td className="py-2 text-right text-blue-400">{formatCurrency(baseGen.avgNetWorth)}</td>
+                                                <td className="py-2 text-right text-green-400">{formatCurrency(scenGen.avgNetWorth)}</td>
+                                                <td className={`py-2 text-right ${diff >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                                    {diff >= 0 ? '+' : ''}{formatCurrency(diff)}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        
+        // Input Form
+        const InputForm = ({ onSubmit, loading }) => {
+            const [formData, setFormData] = useState({
+                name: 'You',
+                age: 30,
+                income: 55000,
+                savings: 5000,
+                debt: 25000,
+                education: 'some_college',
+                financial_literacy: 0.4,
+                monthlyHabitChange: 100,
+                generations: 4,
+            });
+            
+            const handleChange = (e) => {
+                const { name, value, type } = e.target;
+                setFormData(prev => ({
+                    ...prev,
+                    [name]: type === 'number' ? parseFloat(value) : value
+                }));
+            };
+            
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                onSubmit(formData);
+            };
+            
+            return (
+                <form onSubmit={handleSubmit} className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+                    <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                        👤 Your Current Situation
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div>
+                            <label className="block text-slate-400 text-sm mb-1">Your Name</label>
+                            <input
+                                type="text"
+                                name="name"
+                                value={formData.name}
+                                onChange={handleChange}
+                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
+                            />
+                        </div>
+                        
+                        <div>
+                            <label className="block text-slate-400 text-sm mb-1">Age</label>
+                            <input
+                                type="number"
+                                name="age"
+                                value={formData.age}
+                                onChange={handleChange}
+                                min="18"
+                                max="65"
+                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
+                            />
+                        </div>
+                        
+                        <div>
+                            <label className="block text-slate-400 text-sm mb-1">Annual Income</label>
+                            <input
+                                type="number"
+                                name="income"
+                                value={formData.income}
+                                onChange={handleChange}
+                                min="0"
+                                step="1000"
+                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
+                            />
+                        </div>
+                        
+                        <div>
+                            <label className="block text-slate-400 text-sm mb-1">Current Savings</label>
+                            <input
+                                type="number"
+                                name="savings"
+                                value={formData.savings}
+                                onChange={handleChange}
+                                min="0"
+                                step="500"
+                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
+                            />
+                        </div>
+                        
+                        <div>
+                            <label className="block text-slate-400 text-sm mb-1">Current Debt</label>
+                            <input
+                                type="number"
+                                name="debt"
+                                value={formData.debt}
+                                onChange={handleChange}
+                                min="0"
+                                step="500"
+                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
+                            />
+                        </div>
+                        
+                        <div>
+                            <label className="block text-slate-400 text-sm mb-1">Education</label>
+                            <select
+                                name="education"
+                                value={formData.education}
+                                onChange={handleChange}
+                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
+                            >
+                                <option value="high_school">High School</option>
+                                <option value="some_college">Some College</option>
+                                <option value="bachelors">Bachelor's</option>
+                                <option value="masters">Master's</option>
+                                <option value="doctorate">Doctorate</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label className="block text-slate-400 text-sm mb-1">
+                                Financial Literacy ({(formData.financial_literacy * 100).toFixed(0)}%)
+                            </label>
+                            <input
+                                type="range"
+                                name="financial_literacy"
+                                value={formData.financial_literacy}
+                                onChange={handleChange}
+                                min="0.1"
+                                max="1"
+                                step="0.05"
+                                className="w-full"
+                            />
+                        </div>
+                        
+                        <div>
+                            <label className="block text-slate-400 text-sm mb-1">Generations to Simulate</label>
+                            <select
+                                name="generations"
+                                value={formData.generations}
+                                onChange={handleChange}
+                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
+                            >
+                                <option value="3">3 Generations</option>
+                                <option value="4">4 Generations</option>
+                                <option value="5">5 Generations</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    {/* Scenario Section */}
+                    <div className="mt-6 pt-6 border-t border-slate-700">
+                        <h4 className="text-lg font-semibold text-green-400 mb-4 flex items-center gap-2">
+                            🌱 What If... (Scenario Change)
+                        </h4>
+                        
+                        <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+                            <label className="block text-slate-300 text-sm mb-2">
+                                Monthly Habit Change: <span className="text-green-400 font-bold">${formData.monthlyHabitChange}</span>/month
+                            </label>
+                            <input
+                                type="range"
+                                name="monthlyHabitChange"
+                                value={formData.monthlyHabitChange}
+                                onChange={handleChange}
+                                min="0"
+                                max="500"
+                                step="25"
+                                className="w-full"
+                            />
+                            <div className="flex justify-between text-xs text-slate-500 mt-1">
+                                <span>$0</span>
+                                <span>$250</span>
+                                <span>$500</span>
+                            </div>
+                            <p className="text-slate-400 text-sm mt-2">
+                                See how saving an extra ${formData.monthlyHabitChange}/month affects your family's wealth across generations
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className={`w-full mt-6 py-3 px-6 rounded-lg font-semibold text-white transition-all
+                            ${loading 
+                                ? 'bg-slate-600 cursor-not-allowed' 
+                                : 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500'
+                            }`}
+                    >
+                        {loading ? (
+                            <span className="flex items-center justify-center gap-2">
+                                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                                </svg>
+                                Simulating Generations...
+                            </span>
+                        ) : (
+                            '🌳 Grow Your Family Tree'
+                        )}
+                    </button>
+                </form>
+            );
+        };
+        
+        // Habit Impact Calculator (quick widget)
+        const HabitCalculator = () => {
+            const [amount, setAmount] = useState(50);
+            const [result, setResult] = useState(null);
+            
+            useEffect(() => {
+                // Calculate locally for instant feedback
+                const years = 30;
+                const rate = 0.07;
+                const monthlyRate = rate / 12;
+                const months = years * 12;
+                
+                const futureValue = amount * (Math.pow(1 + monthlyRate, months) - 1) / monthlyRate;
+                const gen2 = futureValue * Math.pow(1 + rate, 30);
+                const gen3 = gen2 * Math.pow(1 + rate, 30);
+                
+                setResult({
+                    futureValue,
+                    gen2,
+                    gen3
+                });
+            }, [amount]);
+            
+            return (
+                <div className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-xl p-6">
+                    <h3 className="text-lg font-bold text-amber-400 mb-4 flex items-center gap-2">
+                        💰 Quick: $50 Impact Calculator
+                    </h3>
+                    
+                    <div className="mb-4">
+                        <label className="block text-slate-300 text-sm mb-2">
+                            Monthly Amount: <span className="text-amber-400 font-bold">${amount}</span>
+                        </label>
+                        <input
+                            type="range"
+                            value={amount}
+                            onChange={(e) => setAmount(parseInt(e.target.value))}
+                            min="10"
+                            max="500"
+                            step="10"
+                            className="w-full"
+                        />
+                    </div>
+                    
+                    {result && (
+                        <div className="grid grid-cols-3 gap-3 text-center">
+                            <div className="bg-slate-900/50 rounded-lg p-3">
+                                <div className="text-slate-400 text-xs">Your Retirement</div>
+                                <div className="text-xl font-bold text-white">{formatCurrency(result.futureValue)}</div>
+                                <div className="text-slate-500 text-xs">30 years</div>
+                            </div>
+                            <div className="bg-slate-900/50 rounded-lg p-3">
+                                <div className="text-slate-400 text-xs">Your Child</div>
+                                <div className="text-xl font-bold text-green-400">{formatCurrency(result.gen2)}</div>
+                                <div className="text-slate-500 text-xs">60 years</div>
+                            </div>
+                            <div className="bg-slate-900/50 rounded-lg p-3">
+                                <div className="text-slate-400 text-xs">Grandchild</div>
+                                <div className="text-xl font-bold text-emerald-400">{formatCurrency(result.gen3)}</div>
+                                <div className="text-slate-500 text-xs">90 years</div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+        
+        // Main App Component
+        const App = () => {
+            const [simulationResult, setSimulationResult] = useState(null);
+            const [loading, setLoading] = useState(false);
+            const [error, setError] = useState(null);
+            const [selectedMember, setSelectedMember] = useState(null);
+            const [apiConnected, setApiConnected] = useState(true);
+            
+            // Check API connection on mount
+            useEffect(() => {
+                fetch(`${API_URL}/health`)
+                    .then(res => res.json())
+                    .then(() => setApiConnected(true))
+                    .catch(() => setApiConnected(false));
+            }, []);
+            
+            const runSimulation = async (formData) => {
+                setLoading(true);
+                setError(null);
+                
+                try {
+                    const response = await fetch(`${API_URL}/simulate`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            founder: {
+                                name: formData.name,
+                                age: formData.age,
+                                income: formData.income,
+                                savings: formData.savings,
+                                debt: formData.debt,
+                                education: formData.education,
+                                financial_literacy: formData.financial_literacy,
+                            },
+                            scenario: {
+                                monthly_habit_change: formData.monthlyHabitChange,
+                            },
+                            num_generations: formData.generations,
+                        })
+                    });
+                    
+                    if (!response.ok) throw new Error('Simulation failed');
+                    
+                    const result = await response.json();
+                    setSimulationResult(result);
+                } catch (err) {
+                    setError(err.message);
+                    // Run local simulation as fallback
+                    runLocalSimulation(formData);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            
+            // Fallback local simulation (simplified)
+            const runLocalSimulation = (formData) => {
+                // This is a simplified client-side simulation
+                // The real simulation runs on the backend
+                console.log('Running simplified local simulation...');
+                
+                // Generate mock data for demo purposes
+                const mockResult = generateMockSimulation(formData);
+                setSimulationResult(mockResult);
+            };
+            
+            // Generate mock simulation data
+            const generateMockSimulation = (formData) => {
+                const createMember = (name, gen, netWorth, children = []) => ({
+                    id: Math.random().toString(36).substr(2, 8),
+                    name,
+                    generation: gen,
+                    currentAge: gen === 0 ? formData.age : 45,
+                    income: formData.income * (1 + gen * 0.1),
+                    savings: netWorth * 0.3,
+                    investments: netWorth * 0.5,
+                    debt: Math.max(0, formData.debt - gen * 10000),
+                    homeEquity: netWorth > 100000 ? netWorth * 0.3 : 0,
+                    netWorth,
+                    ownsHome: netWorth > 100000,
+                    inheritanceReceived: gen > 0 ? netWorth * 0.2 : 0,
+                    financialHealth: netWorth > 500000 ? 'thriving' : netWorth > 100000 ? 'stable' : netWorth > 0 ? 'struggling' : 'distressed',
+                    branchThickness: Math.min(1, 0.1 + Math.log10(Math.max(netWorth, 1)) * 0.15),
+                    branchColor: netWorth > 500000 ? '#22c55e' : netWorth > 100000 ? '#84cc16' : netWorth > 0 ? '#f59e0b' : '#ef4444',
+                    children,
+                    lifeEvents: [
+                        { year: 2024 + gen * 25, age: 30, eventType: 'career', description: 'Started career', financialImpact: 0 },
+                        netWorth > 100000 && { year: 2034 + gen * 25, age: 40, eventType: 'home_purchase', description: 'Purchased first home', financialImpact: -50000 },
+                    ].filter(Boolean)
+                });
+                
+                // Calculate growth with and without habit change
+                const baseGrowth = 1.05;
+                const scenarioGrowth = 1.07;
+                
+                const baseWealth = [
+                    formData.savings - formData.debt,
+                    (formData.savings - formData.debt) * Math.pow(baseGrowth, 25) + 200000,
+                    ((formData.savings - formData.debt) * Math.pow(baseGrowth, 25) + 200000) * Math.pow(baseGrowth, 25) + 300000,
+                    (((formData.savings - formData.debt) * Math.pow(baseGrowth, 25) + 200000) * Math.pow(baseGrowth, 25) + 300000) * Math.pow(baseGrowth, 25) + 400000,
+                ];
+                
+                const habitBoost = formData.monthlyHabitChange * 12 * 30; // Simplified
+                const scenarioWealth = [
+                    formData.savings - formData.debt,
+                    (formData.savings - formData.debt + habitBoost) * Math.pow(scenarioGrowth, 25) + 250000,
+                    ((formData.savings - formData.debt + habitBoost) * Math.pow(scenarioGrowth, 25) + 250000) * Math.pow(scenarioGrowth, 25) + 400000,
+                    (((formData.savings - formData.debt + habitBoost) * Math.pow(scenarioGrowth, 25) + 250000) * Math.pow(scenarioGrowth, 25) + 400000) * Math.pow(scenarioGrowth, 25) + 600000,
+                ];
+                
+                const createTree = (wealth) => {
+                    const gen3 = [
+                        createMember('Phoenix', 3, wealth[3] / 2),
+                        createMember('Rowan', 3, wealth[3] / 2),
+                    ];
+                    const gen2 = [
+                        createMember('Riley', 2, wealth[2] / 2, [gen3[0]]),
+                        createMember('Quinn', 2, wealth[2] / 2, [gen3[1]]),
+                    ];
+                    const gen1 = [
+                        createMember('Jordan', 1, wealth[1], gen2),
+                    ];
+                    return createMember(formData.name, 0, wealth[0], gen1);
+                };
+                
+                const baseTree = createTree(baseWealth);
+                const scenarioTree = createTree(scenarioWealth);
+                
+                const totalBase = baseWealth.reduce((a, b) => a + b, 0);
+                const totalScenario = scenarioWealth.reduce((a, b) => a + b, 0);
+                
+                return {
+                    baseline: { tree: baseTree },
+                    scenario: { tree: scenarioTree },
+                    summary: {
+                        baseline: {
+                            totalMembers: 6,
+                            totalNetWorth: totalBase,
+                            byGeneration: baseWealth.map((w, i) => ({ avgNetWorth: w, count: i === 0 ? 1 : i === 1 ? 1 : 2 }))
+                        },
+                        scenario: {
+                            totalMembers: 6,
+                            totalNetWorth: totalScenario,
+                            byGeneration: scenarioWealth.map((w, i) => ({ avgNetWorth: w, count: i === 0 ? 1 : i === 1 ? 1 : 2 }))
+                        },
+                        difference: {
+                            totalNetWorth: totalScenario - totalBase,
+                            percentChange: ((totalScenario - totalBase) / totalBase) * 100
+                        }
+                    }
+                };
+            };
+            
+            return (
+                <div className="min-h-screen p-4 md:p-8">
+                    {/* Header */}
+                    <header className="max-w-7xl mx-auto mb-8">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h1 className="text-4xl md:text-5xl font-bold text-white flex items-center gap-3">
+                                    🌱 Seedling
+                                </h1>
+                                <p className="text-slate-400 mt-2 text-lg">
+                                    Generational Wealth Time Machine
+                                </p>
+                            </div>
+                            
+                            {!apiConnected && (
+                                <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-2 text-amber-400 text-sm">
+                                    ⚠️ API offline - using local simulation
+                                </div>
+                            )}
+                        </div>
+                        
+                        <p className="text-slate-500 mt-4 max-w-2xl">
+                            Watch how your financial decisions today ripple through 3, 4, 5 generations. 
+                            See how a small habit change becomes your grandchild's opportunity—or how debt spirals across time.
+                        </p>
+                    </header>
+                    
+                    <main className="max-w-7xl mx-auto space-y-8">
+                        {/* Quick Calculator */}
+                        <HabitCalculator />
+                        
+                        {/* Input Form */}
+                        <InputForm onSubmit={runSimulation} loading={loading} />
+                        
+                        {/* Error Display */}
+                        {error && (
+                            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-red-400">
+                                {error}
+                            </div>
+                        )}
+                        
+                        {/* Results */}
+                        {simulationResult && (
+                            <div className="space-y-8 slide-in">
+                                {/* Summary */}
+                                <ComparisonSummary summary={simulationResult.summary} />
+                                
+                                {/* Side by Side Trees */}
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <FamilyTree 
+                                        root={simulationResult.baseline.tree}
+                                        title="Current Path"
+                                        isScenario={false}
+                                        onSelectMember={setSelectedMember}
+                                        selectedMember={selectedMember}
+                                    />
+                                    <FamilyTree 
+                                        root={simulationResult.scenario.tree}
+                                        title="With Habit Change"
+                                        isScenario={true}
+                                        onSelectMember={setSelectedMember}
+                                        selectedMember={selectedMember}
+                                    />
+                                </div>
+                                
+                                {/* Key Insight */}
+                                <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-xl p-6 text-center">
+                                    <div className="text-6xl mb-4">🌳</div>
+                                    <h3 className="text-2xl font-bold text-white mb-2">
+                                        Small Seeds, Mighty Trees
+                                    </h3>
+                                    <p className="text-slate-300 max-w-2xl mx-auto">
+                                        Your ${simulationResult.scenario?.params?.monthlyHabitChange || 100}/month habit change today 
+                                        creates <span className="text-green-400 font-bold">
+                                            {formatCurrency(simulationResult.summary.difference.totalNetWorth)}
+                                        </span> more wealth for your family tree.
+                                        That's the power of compound choices across generations.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+                    </main>
+                    
+                    {/* Member Detail Panel */}
+                    {selectedMember && (
+                        <>
+                            <div 
+                                className="fixed inset-0 bg-black/50 z-40"
+                                onClick={() => setSelectedMember(null)}
+                            />
+                            <MemberDetail 
+                                member={selectedMember}
+                                onClose={() => setSelectedMember(null)}
+                            />
+                        </>
+                    )}
+                    
+                    {/* Footer */}
+                    <footer className="max-w-7xl mx-auto mt-12 pt-8 border-t border-slate-800 text-center text-slate-500 text-sm">
+                        <p>
+                            Seedling — Visualizing the compound power of financial decisions across generations
+                        </p>
+                        <p className="mt-2">
+                            Built for first-generation wealth builders 💚
+                        </p>
+                    </footer>
+                </div>
+            );
+        };
+        
+        // Render
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
