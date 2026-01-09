@@ -75,14 +75,28 @@ export default defineConfig({
             sizes: '1280x720',
             type: 'image/png',
             form_factor: 'wide',
-            label: 'Seedling Desktop View'
+            label: 'Seedling Desktop - Wealth Simulator'
+          },
+          {
+            src: '/screenshots/desktop-wide.png',
+            sizes: '1920x1080',
+            type: 'image/png',
+            form_factor: 'wide',
+            label: 'Seedling Full Desktop Experience'
           },
           {
             src: '/screenshots/mobile.png',
             sizes: '390x844',
             type: 'image/png',
             form_factor: 'narrow',
-            label: 'Seedling Mobile View'
+            label: 'Seedling Mobile - On the Go'
+          },
+          {
+            src: '/screenshots/tablet.png',
+            sizes: '768x1024',
+            type: 'image/png',
+            form_factor: 'narrow',
+            label: 'Seedling Tablet View'
           }
         ],
         shortcuts: [
@@ -105,8 +119,11 @@ export default defineConfig({
         prefer_related_applications: false
       },
       workbox: {
-        // Precache all static assets
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        // Precache all static assets (excluding large screenshots)
+        globPatterns: ['**/*.{js,css,html,ico,svg,woff,woff2}', 'icons/*.png', 'apple-touch-icon.png', 'favicon-*.png'],
+
+        // Increase max file size for precaching (5MB)
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
 
         // Runtime caching strategies
         runtimeCaching: [
