@@ -35,10 +35,16 @@ function AppContent() {
     setActivePanel,
     viewMode,
     setSimulation,
+    autoDetectCurrency,
   } = useStore();
 
   // Get sound hook - now safely inside SoundProvider
   const { playSound } = useSounds();
+
+  // Auto-detect currency on first visit
+  useEffect(() => {
+    autoDetectCurrency();
+  }, [autoDetectCurrency]);
 
   // Update store when simulation runs
   useEffect(() => {

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { formatCurrency } from '../utils/format';
+import useStore from '../store/useStore';
 
 const ComparisonSummary = ({ summary }) => {
+  const { currency } = useStore();
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -51,7 +53,7 @@ const ComparisonSummary = ({ summary }) => {
             }`}
           >
             {isPositive ? '+' : ''}
-            {formatCurrency(diff.totalNetWorth)}
+            {formatCurrency(diff.totalNetWorth, currency)}
           </div>
           <div
             className={`text-sm mt-1 ${isPositive ? 'text-seedling-400/70' : 'text-red-400/70'}`}
@@ -68,7 +70,7 @@ const ComparisonSummary = ({ summary }) => {
         >
           <div className="text-slate-400 text-sm">Baseline Family Wealth</div>
           <div className="text-2xl font-bold text-blue-400 mt-1">
-            {formatCurrency(summary.baseline.totalNetWorth)}
+            {formatCurrency(summary.baseline.totalNetWorth, currency)}
           </div>
           <div className="text-slate-400 text-sm mt-1">
             {summary.baseline.totalMembers} family members
@@ -82,7 +84,7 @@ const ComparisonSummary = ({ summary }) => {
         >
           <div className="text-slate-400 text-sm">Scenario Family Wealth</div>
           <div className="text-2xl font-bold text-seedling-400 mt-1">
-            {formatCurrency(summary.scenario.totalNetWorth)}
+            {formatCurrency(summary.scenario.totalNetWorth, currency)}
           </div>
           <div className="text-slate-400 text-sm mt-1">
             {summary.scenario.totalMembers} family members
@@ -125,10 +127,10 @@ const ComparisonSummary = ({ summary }) => {
                       </span>
                     </td>
                     <td className="py-3 px-2 text-right text-blue-400 font-medium">
-                      {formatCurrency(baseGen.avgNetWorth)}
+                      {formatCurrency(baseGen.avgNetWorth, currency)}
                     </td>
                     <td className="py-3 px-2 text-right text-seedling-400 font-medium">
-                      {formatCurrency(scenGen.avgNetWorth)}
+                      {formatCurrency(scenGen.avgNetWorth, currency)}
                     </td>
                     <td
                       className={`py-3 px-2 text-right font-medium ${
@@ -136,7 +138,7 @@ const ComparisonSummary = ({ summary }) => {
                       }`}
                     >
                       {isGenPositive ? '+' : ''}
-                      {formatCurrency(genDiff)}
+                      {formatCurrency(genDiff, currency)}
                     </td>
                   </tr>
                 );

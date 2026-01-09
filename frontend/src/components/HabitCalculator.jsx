@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { formatCurrency } from '../utils/format';
+import { formatCurrency, getCurrency } from '../utils/format';
 import { useHabitCalculator } from '../hooks/useApi';
+import useStore from '../store/useStore';
 
 const HabitCalculator = () => {
   const [amount, setAmount] = useState(100);
   const result = useHabitCalculator(amount);
+  const { currency } = useStore();
+  const currencyConfig = getCurrency(currency);
 
   if (!result) return null;
 
@@ -23,7 +26,7 @@ const HabitCalculator = () => {
       <div className="mb-6">
         <div className="flex justify-between items-center mb-2">
           <label className="text-slate-300 text-sm">Monthly Amount</label>
-          <span className="text-2xl font-bold text-seedling-400">${amount}</span>
+          <span className="text-2xl font-bold text-seedling-400">{currencyConfig.symbol}{amount}</span>
         </div>
         <input
           type="range"
@@ -35,9 +38,9 @@ const HabitCalculator = () => {
           className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-seedling-500"
         />
         <div className="flex justify-between text-xs text-slate-500 mt-1">
-          <span>$25</span>
-          <span>$250</span>
-          <span>$500</span>
+          <span>{currencyConfig.symbol}25</span>
+          <span>{currencyConfig.symbol}250</span>
+          <span>{currencyConfig.symbol}500</span>
         </div>
       </div>
 
@@ -45,7 +48,7 @@ const HabitCalculator = () => {
         <div className="bg-slate-900/60 rounded-xl p-4 text-center border border-slate-700/50 hover:border-blue-500/30 transition-colors">
           <div className="text-slate-400 text-xs mb-1">Your Retirement</div>
           <div className="text-xl md:text-2xl font-bold text-blue-400">
-            {formatCurrency(result.futureValue)}
+            {formatCurrency(result.futureValue, currency)}
           </div>
           <div className="text-slate-500 text-xs mt-1">30 years</div>
         </div>
@@ -53,7 +56,7 @@ const HabitCalculator = () => {
         <div className="bg-slate-900/60 rounded-xl p-4 text-center border border-slate-700/50 hover:border-seedling-500/30 transition-colors">
           <div className="text-slate-400 text-xs mb-1">Your Children</div>
           <div className="text-xl md:text-2xl font-bold text-seedling-400">
-            {formatCurrency(result.gen2)}
+            {formatCurrency(result.gen2, currency)}
           </div>
           <div className="text-slate-500 text-xs mt-1">60 years</div>
         </div>
@@ -61,16 +64,16 @@ const HabitCalculator = () => {
         <div className="bg-slate-900/60 rounded-xl p-4 text-center border border-slate-700/50 hover:border-emerald-500/30 transition-colors">
           <div className="text-slate-400 text-xs mb-1">Grandchildren</div>
           <div className="text-xl md:text-2xl font-bold text-emerald-400">
-            {formatCurrency(result.gen3)}
+            {formatCurrency(result.gen3, currency)}
           </div>
           <div className="text-slate-500 text-xs mt-1">90 years</div>
         </div>
       </div>
 
       <div className="mt-4 text-center text-slate-400 text-sm">
-        Total contributed: <span className="text-white">{formatCurrency(result.totalContributed)}</span>
+        Total contributed: <span className="text-white">{formatCurrency(result.totalContributed, currency)}</span>
         {' '}&bull;{' '}
-        Interest earned: <span className="text-seedling-400">{formatCurrency(result.interestEarned)}</span>
+        Interest earned: <span className="text-seedling-400">{formatCurrency(result.interestEarned, currency)}</span>
       </div>
     </div>
   );

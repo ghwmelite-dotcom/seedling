@@ -1,7 +1,10 @@
 import React from 'react';
 import { formatCurrency, healthColors, educationLabels } from '../utils/format';
+import useStore from '../store/useStore';
 
 const MemberDetail = ({ member, onClose }) => {
+  const { currency } = useStore();
+
   if (!member) return null;
 
   const colors = healthColors[member.financialHealth] || healthColors.stable;
@@ -43,7 +46,7 @@ const MemberDetail = ({ member, onClose }) => {
         <div className="bg-slate-900/50 rounded-xl p-5 mb-6 text-center">
           <div className="text-slate-400 text-sm">Net Worth</div>
           <div className="text-4xl font-bold text-white mt-1">
-            {formatCurrency(member.netWorth)}
+            {formatCurrency(member.netWorth, currency)}
           </div>
         </div>
 
@@ -52,25 +55,25 @@ const MemberDetail = ({ member, onClose }) => {
           <div className="bg-slate-900/50 rounded-xl p-4">
             <div className="text-slate-400 text-xs">Annual Income</div>
             <div className="text-xl font-semibold text-white mt-1">
-              {formatCurrency(member.income)}
+              {formatCurrency(member.income, currency)}
             </div>
           </div>
           <div className="bg-slate-900/50 rounded-xl p-4">
             <div className="text-slate-400 text-xs">Savings</div>
             <div className="text-xl font-semibold text-seedling-400 mt-1">
-              {formatCurrency(member.savings)}
+              {formatCurrency(member.savings, currency)}
             </div>
           </div>
           <div className="bg-slate-900/50 rounded-xl p-4">
             <div className="text-slate-400 text-xs">Investments</div>
             <div className="text-xl font-semibold text-blue-400 mt-1">
-              {formatCurrency(member.investments)}
+              {formatCurrency(member.investments, currency)}
             </div>
           </div>
           <div className="bg-slate-900/50 rounded-xl p-4">
             <div className="text-slate-400 text-xs">Debt</div>
             <div className="text-xl font-semibold text-red-400 mt-1">
-              {formatCurrency(member.debt)}
+              {formatCurrency(member.debt, currency)}
             </div>
           </div>
         </div>
@@ -83,7 +86,7 @@ const MemberDetail = ({ member, onClose }) => {
               <div>
                 <div className="text-purple-400 text-xs">Home Equity</div>
                 <div className="text-xl font-semibold text-purple-400">
-                  {formatCurrency(member.homeEquity)}
+                  {formatCurrency(member.homeEquity, currency)}
                 </div>
               </div>
             </div>
@@ -98,7 +101,7 @@ const MemberDetail = ({ member, onClose }) => {
               <div>
                 <div className="text-amber-400 text-xs">Inheritance Received</div>
                 <div className="text-xl font-semibold text-amber-400">
-                  {formatCurrency(member.inheritanceReceived)}
+                  {formatCurrency(member.inheritanceReceived, currency)}
                 </div>
               </div>
             </div>
@@ -125,7 +128,7 @@ const MemberDetail = ({ member, onClose }) => {
                       <span className="text-white">{child.name}</span>
                     </div>
                     <span className={`font-medium ${childColors.text}`}>
-                      {formatCurrency(child.netWorth)}
+                      {formatCurrency(child.netWorth, currency)}
                     </span>
                   </div>
                 );

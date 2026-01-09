@@ -6,11 +6,12 @@ import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
 } from 'recharts';
 import { formatCurrency } from '../utils/format';
+import useStore from '../store/useStore';
 
 const COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'];
 
-// Custom tooltip component
-const CustomTooltip = ({ active, payload, label }) => {
+// Custom tooltip component factory
+const createCustomTooltip = (currency) => ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-slate-800 border border-slate-600 rounded-lg p-3 shadow-xl">
@@ -18,7 +19,7 @@ const CustomTooltip = ({ active, payload, label }) => {
         {payload.map((entry, index) => (
           <p key={index} style={{ color: entry.color }} className="text-sm">
             {entry.name}: {typeof entry.value === 'number' && entry.value > 100
-              ? formatCurrency(entry.value)
+              ? formatCurrency(entry.value, currency)
               : entry.value}
           </p>
         ))}
@@ -53,7 +54,9 @@ const StatCard = ({ icon, title, value, subtitle, color, trend }) => (
 );
 
 const AnalyticsDashboard = ({ simulation, comparisonSummary }) => {
+  const { currency } = useStore();
   const [activeChart, setActiveChart] = useState('wealth');
+  const CustomTooltip = useMemo(() => createCustomTooltip(currency), [currency]);
 
   // Process simulation data
   const data = useMemo(() => {
@@ -184,7 +187,7 @@ const AnalyticsDashboard = ({ simulation, comparisonSummary }) => {
         <StatCard
           icon="💰"
           title="Total Family Wealth"
-          value={formatCurrency(data.totalWealth)}
+          value={formatCurrency(data.totalWealth, currency)}
           color="text-green-400"
         />
         <StatCard
@@ -196,7 +199,7 @@ const AnalyticsDashboard = ({ simulation, comparisonSummary }) => {
         <StatCard
           icon="📊"
           title="Average Net Worth"
-          value={formatCurrency(data.avgWealth)}
+          value={formatCurrency(data.avgWealth, currency)}
           color="text-blue-400"
         />
         <StatCard

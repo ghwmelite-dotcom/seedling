@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { formatCurrency } from '../utils/format';
+import useStore from '../store/useStore';
 
 const InsightCard = ({ difference, monthlyHabitChange }) => {
+  const { currency } = useStore();
   const [isVisible, setIsVisible] = useState(false);
   const [showTree, setShowTree] = useState(false);
 
@@ -96,7 +98,7 @@ const InsightCard = ({ difference, monthlyHabitChange }) => {
             animationDelay: '500ms',
           }}
         >
-          {formatCurrency(difference)}
+          {formatCurrency(difference, currency)}
         </span>{' '}
         more wealth for your family tree.
       </p>

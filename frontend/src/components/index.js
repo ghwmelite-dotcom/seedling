@@ -24,3 +24,4 @@ export { default as AnalyticsDashboard } from './AnalyticsDashboard';
 export { default as ScenarioLibrary } from './ScenarioLibrary';
 export { default as PDFReportGenerator } from './PDFReportGenerator';
 export { default as SoundSettings, SoundProvider, useSounds } from './SoundSystem';
+export { default as CurrencySelector } from './CurrencySelector';

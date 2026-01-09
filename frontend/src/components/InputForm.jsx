@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
+import useStore from '../store/useStore';
+import { getCurrency } from '../utils/format';
+import CurrencySelector from './CurrencySelector';
 
 const InputForm = ({ onSubmit, loading }) => {
+  const { currency } = useStore();
+  const currencyConfig = getCurrency(currency);
   const [formData, setFormData] = useState({
     name: 'You',
     age: 30,
@@ -28,14 +33,17 @@ const InputForm = ({ onSubmit, loading }) => {
 
   return (
     <form onSubmit={handleSubmit} className="glass-card p-6 animate-slide-up">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-          <span className="text-xl">👤</span>
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+            <span className="text-xl">👤</span>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-white">Your Current Situation</h3>
+            <p className="text-slate-400 text-sm">Enter your financial details</p>
+          </div>
         </div>
-        <div>
-          <h3 className="text-lg font-semibold text-white">Your Current Situation</h3>
-          <p className="text-slate-400 text-sm">Enter your financial details</p>
-        </div>
+        <CurrencySelector compact />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
@@ -67,7 +75,7 @@ const InputForm = ({ onSubmit, loading }) => {
         <div>
           <label className="block text-slate-400 text-sm mb-2">Annual Income</label>
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">{currencyConfig.symbol}</span>
             <input
               type="number"
               name="income"
@@ -83,7 +91,7 @@ const InputForm = ({ onSubmit, loading }) => {
         <div>
           <label className="block text-slate-400 text-sm mb-2">Current Savings</label>
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">{currencyConfig.symbol}</span>
             <input
               type="number"
               name="savings"
@@ -99,7 +107,7 @@ const InputForm = ({ onSubmit, loading }) => {
         <div>
           <label className="block text-slate-400 text-sm mb-2">Current Debt</label>
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">{currencyConfig.symbol}</span>
             <input
               type="number"
               name="debt"
@@ -185,7 +193,7 @@ const InputForm = ({ onSubmit, loading }) => {
               </p>
             </div>
             <div className="text-3xl font-bold text-seedling-400">
-              ${formData.monthlyHabitChange}
+              {currencyConfig.symbol}{formData.monthlyHabitChange}
               <span className="text-lg text-slate-400 font-normal">/mo</span>
             </div>
           </div>
@@ -201,11 +209,11 @@ const InputForm = ({ onSubmit, loading }) => {
             className="w-full h-3 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-seedling-500"
           />
           <div className="flex justify-between text-xs text-slate-500 mt-2">
-            <span>$0</span>
-            <span>$125</span>
-            <span>$250</span>
-            <span>$375</span>
-            <span>$500</span>
+            <span>{currencyConfig.symbol}0</span>
+            <span>{currencyConfig.symbol}125</span>
+            <span>{currencyConfig.symbol}250</span>
+            <span>{currencyConfig.symbol}375</span>
+            <span>{currencyConfig.symbol}500</span>
           </div>
         </div>
       </div>

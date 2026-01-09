@@ -1,8 +1,10 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import TreeNode from './TreeNode';
 import { formatCurrency } from '../utils/format';
+import useStore from '../store/useStore';
 
 const FamilyTree = ({ root, title, isScenario, onSelectMember, selectedMember }) => {
+  const { currency } = useStore();
   const [isVisible, setIsVisible] = useState(false);
 
   // Trigger animation on mount or when root changes
@@ -71,7 +73,7 @@ const FamilyTree = ({ root, title, isScenario, onSelectMember, selectedMember })
           ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'}`}
           style={{ transitionDelay: `${generations.length * 300}ms` }}
         >
-          {formatCurrency(totalWealth)}
+          {formatCurrency(totalWealth, currency)}
         </div>
       </div>
 
