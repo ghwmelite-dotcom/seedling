@@ -19,6 +19,8 @@ import {
   SoundSettings,
   SoundProvider,
   useSounds,
+  CurrencySelector,
+  ExchangeRateDisplay,
 } from './components';
 import { useApiHealth, useSimulation } from './hooks/useApi';
 import useStore from './store/useStore';
@@ -36,15 +38,17 @@ function AppContent() {
     viewMode,
     setSimulation,
     autoDetectCurrency,
+    loadExchangeRates,
   } = useStore();
 
   // Get sound hook - now safely inside SoundProvider
   const { playSound } = useSounds();
 
-  // Auto-detect currency on first visit
+  // Auto-detect currency and load exchange rates on first visit
   useEffect(() => {
     autoDetectCurrency();
-  }, [autoDetectCurrency]);
+    loadExchangeRates();
+  }, [autoDetectCurrency, loadExchangeRates]);
 
   // Update store when simulation runs
   useEffect(() => {
@@ -179,7 +183,29 @@ function AppContent() {
 
       case 'settings':
         return (
-          <SoundSettings />
+          <div className="space-y-8">
+            {/* Currency Settings */}
+            <motion.div
+              className="glass-card p-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <CurrencySelector />
+            </motion.div>
+
+            {/* Exchange Rates */}
+            <motion.div
+              className="glass-card p-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <ExchangeRateDisplay />
+            </motion.div>
+
+            {/* Sound Settings */}
+            <SoundSettings />
+          </div>
         );
 
       default:

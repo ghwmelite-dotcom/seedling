@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { detectCurrencyFromLocale, getCurrencyFromCountry, DEFAULT_CURRENCY } from '../utils/format';
+import { fetchExchangeRates, convertCurrency as convertCurrencyUtil, FALLBACK_RATES } from '../utils/exchangeRates';
 
 // Detect currency from IP using free API
 const detectCurrencyFromIP = async () => {
@@ -24,6 +25,45 @@ const useStore = create(
       currency: DEFAULT_CURRENCY,
       currencyAutoDetected: false,
       setCurrency: (currency) => set({ currency }),
+
+      // Exchange Rates
+      exchangeRates: FALLBACK_RATES,
+      exchangeRatesLoading: false,
+      exchangeRatesLastUpdated: null,
+      showConvertedValues: false,
+      convertToCurrency: null, // Currency to show conversions in
+
+      setShowConvertedValues: (show) => set({ showConvertedValues: show }),
+      setConvertToCurrency: (currency) => set({ convertToCurrency: currency }),
+
+      // Fetch exchange rates
+      loadExchangeRates: async () => {
+        const state = get();
+        set({ exchangeRatesLoading: true });
+
+        try {
+          const rates = await fetchExchangeRates('USD');
+          set({
+            exchangeRates: rates,
+            exchangeRatesLoading: false,
+            exchangeRatesLastUpdated: Date.now(),
+          });
+        } catch (error) {
+          console.error('Failed to load exchange rates:', error);
+          set({ exchangeRatesLoading: false });
+        }
+      },
+
+      // Convert an amount from selected currency to another
+      convertAmount: (amount, toCurrency) => {
+        const state = get();
+        return convertCurrencyUtil(
+          amount,
+          state.currency,
+          toCurrency || state.convertToCurrency || 'USD',
+          state.exchangeRates
+        );
+      },
 
       // Auto-detect currency on first visit
       autoDetectCurrency: async () => {

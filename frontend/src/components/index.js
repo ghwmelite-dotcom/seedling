@@ -25,3 +25,4 @@ export { default as ScenarioLibrary } from './ScenarioLibrary';
 export { default as PDFReportGenerator } from './PDFReportGenerator';
 export { default as SoundSettings, SoundProvider, useSounds } from './SoundSystem';
 export { default as CurrencySelector } from './CurrencySelector';
+export { default as ExchangeRateDisplay } from './ExchangeRateDisplay';

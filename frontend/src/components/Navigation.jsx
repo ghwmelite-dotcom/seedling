@@ -1,6 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import useStore from '../store/useStore';
+import CurrencySelector from './CurrencySelector';
+import ExchangeRateDisplay from './ExchangeRateDisplay';
 
 const navItems = [
   { id: 'simulator', label: 'Simulator', icon: '🌱', description: 'Run simulations' },
@@ -73,6 +75,17 @@ const Navigation = () => {
       {/* Quick stats */}
       <div className="mt-6 pt-6 border-t border-slate-700/50">
         <QuickStats />
+      </div>
+
+      {/* Currency tools */}
+      <div className="mt-6 pt-6 border-t border-slate-700/50">
+        <div className="px-2 space-y-3">
+          <div className="text-slate-400 text-xs">Currency</div>
+          <div className="flex items-center gap-2">
+            <CurrencySelector compact />
+            <ExchangeRateDisplay compact />
+          </div>
+        </div>
       </div>
     </nav>
   );
