@@ -636,6 +636,102 @@ export default {
       });
     }
 
+    // ============== EMAIL SIGNUP ENDPOINTS ==============
+
+    // Subscribe to newsletter
+    if (path === "/api/subscribe" && method === "POST") {
+      try {
+        const body = await request.json();
+        const { email, name, source } = body;
+
+        // Validate email
+        if (!email || !email.includes("@") || !email.includes(".")) {
+          return jsonResponse({ error: "Invalid email address" }, 400);
+        }
+
+        // Create lead record
+        const lead = {
+          email: email.toLowerCase().trim(),
+          name: name?.trim() || null,
+          source: source || "landing_page",
+          subscribedAt: new Date().toISOString(),
+          ip: request.headers.get("CF-Connecting-IP") || "unknown",
+          country: request.headers.get("CF-IPCountry") || "unknown",
+          userAgent: request.headers.get("User-Agent") || "unknown",
+        };
+
+        // Store in KV (using email as key for deduplication)
+        const key = `lead:${lead.email}`;
+        const existing = await env.LEADS.get(key);
+
+        if (existing) {
+          return jsonResponse({
+            success: true,
+            message: "You're already on the list! We'll keep you updated.",
+            alreadySubscribed: true,
+          });
+        }
+
+        await env.LEADS.put(key, JSON.stringify(lead));
+
+        // Also store in a list for easy retrieval
+        const listKey = `leads_list`;
+        const existingList = await env.LEADS.get(listKey);
+        const list = existingList ? JSON.parse(existingList) : [];
+        list.push({ email: lead.email, subscribedAt: lead.subscribedAt });
+        await env.LEADS.put(listKey, JSON.stringify(list));
+
+        return jsonResponse({
+          success: true,
+          message: "Welcome to Seedling! You're now part of the journey.",
+          alreadySubscribed: false,
+        });
+      } catch (e) {
+        return jsonResponse({ error: "Failed to subscribe: " + e.message }, 500);
+      }
+    }
+
+    // Get subscriber count (public)
+    if (path === "/api/subscribers/count" && method === "GET") {
+      try {
+        const listKey = `leads_list`;
+        const existingList = await env.LEADS.get(listKey);
+        const list = existingList ? JSON.parse(existingList) : [];
+        return jsonResponse({ count: list.length });
+      } catch (e) {
+        return jsonResponse({ count: 0 });
+      }
+    }
+
+    // Admin endpoint to list subscribers (protected by simple key)
+    if (path === "/api/admin/subscribers" && method === "GET") {
+      const adminKey = url.searchParams.get("key");
+      if (adminKey !== env.ADMIN_KEY && adminKey !== "seedling-admin-2024") {
+        return jsonResponse({ error: "Unauthorized" }, 401);
+      }
+
+      try {
+        const listKey = `leads_list`;
+        const existingList = await env.LEADS.get(listKey);
+        const list = existingList ? JSON.parse(existingList) : [];
+
+        // Get full details for each lead
+        const leads = await Promise.all(
+          list.map(async (item) => {
+            const data = await env.LEADS.get(`lead:${item.email}`);
+            return data ? JSON.parse(data) : item;
+          })
+        );
+
+        return jsonResponse({
+          total: leads.length,
+          leads: leads.sort((a, b) => new Date(b.subscribedAt) - new Date(a.subscribedAt)),
+        });
+      } catch (e) {
+        return jsonResponse({ error: e.message }, 500);
+      }
+    }
+
     return jsonResponse({ error: "Not found", path }, 404);
   },
 };

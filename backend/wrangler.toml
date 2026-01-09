@@ -4,3 +4,7 @@ compatibility_date = "2024-12-01"
 
 [vars]
 ENVIRONMENT = "production"
+
+[[kv_namespaces]]
+binding = "LEADS"
+id = "58af89d4ada5447fb0812d4a68b71d9f"
