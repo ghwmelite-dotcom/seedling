@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { analytics } from '../hooks/useAnalytics';
 
 const API_URL = import.meta.env.PROD
   ? 'https://seedling-api.ghwmelite.workers.dev'
@@ -83,6 +84,15 @@ const EmailSignup = ({
   const [message, setMessage] = useState('');
   const [subscriberCount, setSubscriberCount] = useState(null);
   const [showCelebration, setShowCelebration] = useState(false);
+  const hasTrackedStart = useRef(false);
+
+  // Track signup_start when user first interacts with email input
+  const handleEmailFocus = () => {
+    if (!hasTrackedStart.current) {
+      analytics.signupStart();
+      hasTrackedStart.current = true;
+    }
+  };
 
   // Fetch subscriber count on mount
   useEffect(() => {
@@ -117,6 +127,12 @@ const EmailSignup = ({
         setMessage(data.message);
         setShowCelebration(true);
         setTimeout(() => setShowCelebration(false), 2000);
+
+        // Track successful signup
+        if (!data.alreadySubscribed) {
+          analytics.signupComplete(source);
+        }
+
         if (onSuccess) onSuccess(data);
         if (!data.alreadySubscribed && subscriberCount !== null) {
           setSubscriberCount(prev => prev + 1);
@@ -177,6 +193,7 @@ const EmailSignup = ({
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    onFocus={handleEmailFocus}
                     placeholder="Enter your email"
                     className="w-full px-5 py-4 bg-slate-800/80 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20 transition-all"
                   />
@@ -257,6 +274,7 @@ const EmailSignup = ({
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onFocus={handleEmailFocus}
               placeholder="your@email.com"
               className="flex-1 px-4 py-2 bg-slate-800/60 border border-slate-700/50 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
             />
@@ -300,6 +318,7 @@ const EmailSignup = ({
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onFocus={handleEmailFocus}
               placeholder="Enter your email for updates"
               className="flex-1 px-5 py-3 bg-slate-800/60 border border-slate-700/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500/50"
             />
@@ -399,6 +418,7 @@ const EmailSignup = ({
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      onFocus={handleEmailFocus}
                       placeholder="Your email *"
                       required
                       className="flex-1 px-5 py-4 bg-slate-900/60 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20 transition-all"

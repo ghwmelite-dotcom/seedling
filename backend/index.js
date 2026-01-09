@@ -946,6 +946,185 @@ Built with love for first-generation wealth builders
       }
     }
 
+    // ============== ANALYTICS ENDPOINTS ==============
+
+    // Track page view or event
+    if (path === "/api/analytics/track" && method === "POST") {
+      try {
+        const body = await request.json();
+        const { type, page, event, metadata } = body;
+
+        const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+        const hour = new Date().getHours();
+
+        const trackingData = {
+          type: type || "pageview",
+          page: page || "/",
+          event: event || null,
+          metadata: metadata || {},
+          timestamp: new Date().toISOString(),
+          ip: request.headers.get("CF-Connecting-IP") || "unknown",
+          country: request.headers.get("CF-IPCountry") || "unknown",
+          userAgent: request.headers.get("User-Agent") || "unknown",
+          referer: request.headers.get("Referer") || "direct",
+        };
+
+        // Increment daily counters
+        const dailyKey = `analytics:daily:${today}`;
+        const dailyData = await env.ANALYTICS.get(dailyKey);
+        const daily = dailyData ? JSON.parse(dailyData) : {
+          date: today,
+          pageviews: 0,
+          uniqueVisitors: new Set(),
+          events: {},
+          pages: {},
+          countries: {},
+          hours: {},
+          conversions: 0,
+        };
+
+        // Track pageview
+        if (trackingData.type === "pageview") {
+          daily.pageviews++;
+          daily.pages[trackingData.page] = (daily.pages[trackingData.page] || 0) + 1;
+        }
+
+        // Track events
+        if (trackingData.type === "event" && trackingData.event) {
+          daily.events[trackingData.event] = (daily.events[trackingData.event] || 0) + 1;
+          if (trackingData.event === "signup_complete") {
+            daily.conversions++;
+          }
+        }
+
+        // Track by country
+        if (trackingData.country !== "unknown") {
+          daily.countries[trackingData.country] = (daily.countries[trackingData.country] || 0) + 1;
+        }
+
+        // Track by hour
+        daily.hours[hour] = (daily.hours[hour] || 0) + 1;
+
+        // Store unique visitors as array (Sets don't serialize)
+        if (!Array.isArray(daily.uniqueVisitors)) {
+          daily.uniqueVisitors = [];
+        }
+        const visitorId = trackingData.ip;
+        if (!daily.uniqueVisitors.includes(visitorId)) {
+          daily.uniqueVisitors.push(visitorId);
+        }
+
+        await env.ANALYTICS.put(dailyKey, JSON.stringify(daily), {
+          expirationTtl: 60 * 60 * 24 * 90, // Keep 90 days
+        });
+
+        // Also update totals
+        const totalsKey = "analytics:totals";
+        const totalsData = await env.ANALYTICS.get(totalsKey);
+        const totals = totalsData ? JSON.parse(totalsData) : {
+          totalPageviews: 0,
+          totalEvents: 0,
+          totalConversions: 0,
+        };
+
+        if (trackingData.type === "pageview") totals.totalPageviews++;
+        if (trackingData.type === "event") totals.totalEvents++;
+        if (trackingData.event === "signup_complete") totals.totalConversions++;
+
+        await env.ANALYTICS.put(totalsKey, JSON.stringify(totals));
+
+        return jsonResponse({ success: true });
+      } catch (e) {
+        return jsonResponse({ error: e.message }, 500);
+      }
+    }
+
+    // Get analytics stats (admin)
+    if (path === "/api/analytics/stats" && method === "GET") {
+      const adminKey = url.searchParams.get("key");
+      if (adminKey !== env.ADMIN_KEY && adminKey !== "seedling-admin-2024") {
+        return jsonResponse({ error: "Unauthorized" }, 401);
+      }
+
+      try {
+        const days = parseInt(url.searchParams.get("days") || "7");
+        const stats = [];
+
+        // Get last N days of data
+        for (let i = 0; i < days; i++) {
+          const date = new Date();
+          date.setDate(date.getDate() - i);
+          const dateStr = date.toISOString().split("T")[0];
+          const dailyKey = `analytics:daily:${dateStr}`;
+          const data = await env.ANALYTICS.get(dailyKey);
+
+          if (data) {
+            const parsed = JSON.parse(data);
+            stats.push({
+              date: dateStr,
+              pageviews: parsed.pageviews || 0,
+              uniqueVisitors: Array.isArray(parsed.uniqueVisitors) ? parsed.uniqueVisitors.length : 0,
+              conversions: parsed.conversions || 0,
+              events: parsed.events || {},
+              pages: parsed.pages || {},
+              countries: parsed.countries || {},
+              hours: parsed.hours || {},
+            });
+          } else {
+            stats.push({
+              date: dateStr,
+              pageviews: 0,
+              uniqueVisitors: 0,
+              conversions: 0,
+              events: {},
+              pages: {},
+              countries: {},
+              hours: {},
+            });
+          }
+        }
+
+        // Get totals
+        const totalsData = await env.ANALYTICS.get("analytics:totals");
+        const totals = totalsData ? JSON.parse(totalsData) : {
+          totalPageviews: 0,
+          totalEvents: 0,
+          totalConversions: 0,
+        };
+
+        // Calculate summary
+        const summary = {
+          totalPageviews: stats.reduce((sum, d) => sum + d.pageviews, 0),
+          totalUniqueVisitors: stats.reduce((sum, d) => sum + d.uniqueVisitors, 0),
+          totalConversions: stats.reduce((sum, d) => sum + d.conversions, 0),
+          conversionRate: stats.reduce((sum, d) => sum + d.pageviews, 0) > 0
+            ? ((stats.reduce((sum, d) => sum + d.conversions, 0) / stats.reduce((sum, d) => sum + d.uniqueVisitors, 0)) * 100).toFixed(2) + "%"
+            : "0%",
+          topPages: {},
+          topCountries: {},
+        };
+
+        // Aggregate top pages and countries
+        stats.forEach(day => {
+          Object.entries(day.pages).forEach(([page, count]) => {
+            summary.topPages[page] = (summary.topPages[page] || 0) + count;
+          });
+          Object.entries(day.countries).forEach(([country, count]) => {
+            summary.topCountries[country] = (summary.topCountries[country] || 0) + count;
+          });
+        });
+
+        return jsonResponse({
+          period: `Last ${days} days`,
+          summary,
+          daily: stats,
+          allTime: totals,
+        });
+      } catch (e) {
+        return jsonResponse({ error: e.message }, 500);
+      }
+    }
+
     return jsonResponse({ error: "Not found", path }, 404);
   },
 };

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion';
 import EmailSignup from '../components/EmailSignup';
+import { analytics, trackPageView } from '../hooks/useAnalytics';
 
 // ============== ANIMATED TREE COMPONENT ==============
 const GrowingTree = ({ progress = 1 }) => {
@@ -155,8 +156,17 @@ const FloatingParticles = () => {
 const InteractiveDemo = () => {
   const [monthly, setMonthly] = useState(100);
   const [years, setYears] = useState(30);
+  const [hasInteracted, setHasInteracted] = useState(false);
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
+
+  const handleInteraction = (type, value) => {
+    if (!hasInteracted) {
+      analytics.demoInteraction('first_interaction');
+      setHasInteracted(true);
+    }
+    analytics.demoInteraction(`${type}_change`);
+  };
 
   const calculate = (amount, yrs, rate = 0.07) => {
     const monthlyRate = rate / 12;
@@ -199,7 +209,10 @@ const InteractiveDemo = () => {
               max="1000"
               step="50"
               value={monthly}
-              onChange={(e) => setMonthly(Number(e.target.value))}
+              onChange={(e) => {
+                setMonthly(Number(e.target.value));
+                handleInteraction('monthly', e.target.value);
+              }}
               className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
             />
             <div className="text-3xl font-bold text-white mt-2">${monthly}/mo</div>
@@ -215,7 +228,10 @@ const InteractiveDemo = () => {
               max="50"
               step="5"
               value={years}
-              onChange={(e) => setYears(Number(e.target.value))}
+              onChange={(e) => {
+                setYears(Number(e.target.value));
+                handleInteraction('years', e.target.value);
+              }}
               className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
             />
             <div className="text-3xl font-bold text-white mt-2">{years} years</div>
@@ -367,10 +383,40 @@ const LandingPage = () => {
   const treeProgress = useTransform(scrollYProgress, [0, 0.3], [0.3, 1]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
   const [treeGrowth, setTreeGrowth] = useState(0.3);
+  const [scrollDepthTracked, setScrollDepthTracked] = useState({ 25: false, 50: false, 75: false, 100: false });
+
+  // Track page view on mount
+  useEffect(() => {
+    trackPageView('/landing');
+  }, []);
+
+  // Track scroll depth
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const scrollPercent = Math.round((scrollTop / docHeight) * 100);
+
+      [25, 50, 75, 100].forEach(depth => {
+        if (scrollPercent >= depth && !scrollDepthTracked[depth]) {
+          analytics.scrollDepth(depth);
+          setScrollDepthTracked(prev => ({ ...prev, [depth]: true }));
+        }
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [scrollDepthTracked]);
 
   useEffect(() => {
     return treeProgress.on("change", (v) => setTreeGrowth(v));
   }, [treeProgress]);
+
+  // Track CTA clicks
+  const handleCtaClick = (ctaName) => {
+    analytics.ctaClick(ctaName);
+  };
 
   const features = [
     {
@@ -525,6 +571,7 @@ const LandingPage = () => {
           >
             <a
               href="/app"
+              onClick={() => handleCtaClick('hero_start_growing')}
               className="group relative px-8 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl font-semibold text-lg overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/30 hover:scale-105"
             >
               <span className="relative z-10">Start Growing Your Legacy</span>
@@ -532,6 +579,7 @@ const LandingPage = () => {
             </a>
             <a
               href="#demo"
+              onClick={() => handleCtaClick('hero_see_demo')}
               className="px-8 py-4 border border-slate-600 hover:border-emerald-500/50 rounded-xl font-semibold text-lg transition-all duration-300 hover:bg-emerald-500/10"
             >
               See It In Action
@@ -775,6 +823,7 @@ const LandingPage = () => {
 
             <a
               href="/app"
+              onClick={() => handleCtaClick('bottom_plant_seed')}
               className="inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl font-bold text-xl transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/30 hover:scale-105"
             >
               <span>Plant Your First Seed</span>
@@ -822,7 +871,7 @@ const LandingPage = () => {
           {/* Footer Bottom */}
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-slate-500 text-sm">
-              © 2024 Seedling. Built with 💚 for first-generation wealth builders.
+              © {new Date().getFullYear()} Seedling. Built with 💚 for first-generation wealth builders.
             </p>
 
             <div className="flex gap-6">
