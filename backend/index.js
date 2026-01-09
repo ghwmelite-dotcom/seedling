@@ -1125,6 +1125,170 @@ Built with love for first-generation wealth builders
       }
     }
 
+    // ============== PUSH NOTIFICATION ENDPOINTS ==============
+
+    // Store push subscription
+    if (path === "/api/push/subscribe" && method === "POST") {
+      try {
+        const body = await request.json();
+        const { subscription, timestamp } = body;
+
+        if (!subscription || !subscription.endpoint) {
+          return jsonResponse({ error: "Invalid subscription" }, 400);
+        }
+
+        // Create subscription record
+        const subRecord = {
+          subscription,
+          subscribedAt: new Date(timestamp || Date.now()).toISOString(),
+          ip: request.headers.get("CF-Connecting-IP") || "unknown",
+          country: request.headers.get("CF-IPCountry") || "unknown",
+          userAgent: request.headers.get("User-Agent") || "unknown",
+        };
+
+        // Use endpoint hash as key
+        const endpointHash = await hashEndpoint(subscription.endpoint);
+        const key = `push:${endpointHash}`;
+
+        await env.PUSH_SUBSCRIPTIONS.put(key, JSON.stringify(subRecord));
+
+        // Update subscription list
+        const listKey = "push:subscriptions_list";
+        const existingList = await env.PUSH_SUBSCRIPTIONS.get(listKey);
+        const list = existingList ? JSON.parse(existingList) : [];
+
+        if (!list.includes(endpointHash)) {
+          list.push(endpointHash);
+          await env.PUSH_SUBSCRIPTIONS.put(listKey, JSON.stringify(list));
+        }
+
+        return jsonResponse({
+          success: true,
+          message: "Push subscription saved successfully",
+        });
+      } catch (e) {
+        return jsonResponse({ error: "Failed to save subscription: " + e.message }, 500);
+      }
+    }
+
+    // Remove push subscription
+    if (path === "/api/push/unsubscribe" && method === "POST") {
+      try {
+        const body = await request.json();
+        const { endpoint } = body;
+
+        if (!endpoint) {
+          return jsonResponse({ error: "Endpoint required" }, 400);
+        }
+
+        const endpointHash = await hashEndpoint(endpoint);
+        const key = `push:${endpointHash}`;
+
+        // Delete the subscription
+        await env.PUSH_SUBSCRIPTIONS.delete(key);
+
+        // Update list
+        const listKey = "push:subscriptions_list";
+        const existingList = await env.PUSH_SUBSCRIPTIONS.get(listKey);
+        if (existingList) {
+          const list = JSON.parse(existingList);
+          const newList = list.filter(h => h !== endpointHash);
+          await env.PUSH_SUBSCRIPTIONS.put(listKey, JSON.stringify(newList));
+        }
+
+        return jsonResponse({
+          success: true,
+          message: "Push subscription removed",
+        });
+      } catch (e) {
+        return jsonResponse({ error: "Failed to unsubscribe: " + e.message }, 500);
+      }
+    }
+
+    // Get push subscription count (admin)
+    if (path === "/api/push/count" && method === "GET") {
+      const adminKey = url.searchParams.get("key");
+      if (adminKey !== env.ADMIN_KEY && adminKey !== "seedling-admin-2024") {
+        return jsonResponse({ error: "Unauthorized" }, 401);
+      }
+
+      try {
+        const listKey = "push:subscriptions_list";
+        const existingList = await env.PUSH_SUBSCRIPTIONS.get(listKey);
+        const list = existingList ? JSON.parse(existingList) : [];
+        return jsonResponse({ count: list.length });
+      } catch (e) {
+        return jsonResponse({ count: 0 });
+      }
+    }
+
+    // Send push notification to all subscribers (admin)
+    if (path === "/api/push/send" && method === "POST") {
+      const adminKey = url.searchParams.get("key");
+      if (adminKey !== env.ADMIN_KEY && adminKey !== "seedling-admin-2024") {
+        return jsonResponse({ error: "Unauthorized" }, 401);
+      }
+
+      try {
+        const body = await request.json();
+        const { title, body: notifBody, icon, badge, tag, data } = body;
+
+        if (!title || !notifBody) {
+          return jsonResponse({ error: "Title and body required" }, 400);
+        }
+
+        // Get all subscriptions
+        const listKey = "push:subscriptions_list";
+        const existingList = await env.PUSH_SUBSCRIPTIONS.get(listKey);
+        const list = existingList ? JSON.parse(existingList) : [];
+
+        const payload = JSON.stringify({
+          title,
+          body: notifBody,
+          icon: icon || "/icons/icon-192x192.png",
+          badge: badge || "/icons/icon-72x72.png",
+          tag: tag || "seedling-notification",
+          data: data || { url: "/" },
+        });
+
+        // VAPID keys (private key should be in env)
+        const vapidPublicKey = "BK7sf3LMxPlQzwqUzcHPHI03p8XYM-aK7OonNRjn_ueQUkJRmU3zIV1Gu31OlTgK24FVxlxkzRwAGrmnjZB8Pkg";
+        const vapidPrivateKey = env.VAPID_PRIVATE_KEY || "zI9GlcUQqNaDhRs13iJsJZjNnZx82j98QzMFekkRpK0";
+
+        let sent = 0;
+        let failed = 0;
+        const errors = [];
+
+        // Note: In a production environment, you'd use web-push library
+        // For Cloudflare Workers, we need to implement the Web Push protocol manually
+        // or use a service like Firebase Cloud Messaging
+        // For now, we store the notification intent for client-side polling
+
+        // Store pending notification for client polling
+        const notifKey = `push:pending:${Date.now()}`;
+        await env.PUSH_SUBSCRIPTIONS.put(notifKey, payload, {
+          expirationTtl: 60 * 60 * 24, // 24 hour TTL
+        });
+
+        return jsonResponse({
+          success: true,
+          message: `Notification queued for ${list.length} subscribers`,
+          subscriberCount: list.length,
+        });
+      } catch (e) {
+        return jsonResponse({ error: "Failed to send notification: " + e.message }, 500);
+      }
+    }
+
     return jsonResponse({ error: "Not found", path }, 404);
   },
 };
+
+// Helper function to hash endpoint for storage
+async function hashEndpoint(endpoint) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(endpoint);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 32);
+}

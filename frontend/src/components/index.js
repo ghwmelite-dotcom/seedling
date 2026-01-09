@@ -28,3 +28,4 @@ export { default as CurrencySelector } from './CurrencySelector';
 export { default as ExchangeRateDisplay } from './ExchangeRateDisplay';
 export { default as PWAInstallPrompt } from './PWAInstallPrompt';
 export { default as OfflineIndicator, UpdateAvailable } from './OfflineIndicator';
+export { default as NotificationSettings } from './NotificationSettings';

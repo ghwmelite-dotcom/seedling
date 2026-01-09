@@ -24,6 +24,7 @@ import {
   PWAInstallPrompt,
   OfflineIndicator,
   UpdateAvailable,
+  NotificationSettings,
 } from './components';
 import { useApiHealth, useSimulation } from './hooks/useApi';
 import useStore from './store/useStore';
@@ -205,6 +206,9 @@ function AppContent() {
             >
               <ExchangeRateDisplay />
             </motion.div>
+
+            {/* Notification Settings */}
+            <NotificationSettings />
 
             {/* Sound Settings */}
             <SoundSettings />

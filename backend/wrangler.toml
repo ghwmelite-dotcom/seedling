@@ -12,3 +12,7 @@ id = "58af89d4ada5447fb0812d4a68b71d9f"
 [[kv_namespaces]]
 binding = "ANALYTICS"
 id = "1b3f7bc7109b4534981b7cbed268daef"
+
+[[kv_namespaces]]
+binding = "PUSH_SUBSCRIPTIONS"
+id = "8fcc0a3e158a4cbd9bd3a586a3f4331e"
