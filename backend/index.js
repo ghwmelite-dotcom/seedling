@@ -636,6 +636,216 @@ export default {
       });
     }
 
+    // ============== EMAIL TEMPLATES ==============
+
+    const getWelcomeEmailHTML = (name) => `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to Seedling</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0f0d; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0f0d; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; background: linear-gradient(135deg, #0f1912 0%, #0a0f0d 100%); border-radius: 24px; border: 1px solid rgba(52, 211, 153, 0.2); overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 20px; text-align: center;">
+              <div style="font-size: 48px; margin-bottom: 16px;">🌱</div>
+              <h1 style="color: #ffffff; font-size: 28px; font-weight: 700; margin: 0; letter-spacing: -0.5px;">
+                Welcome to Seedling${name ? `, ${name}` : ''}!
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Main Content -->
+          <tr>
+            <td style="padding: 20px 40px 40px;">
+              <p style="color: #94a3b8; font-size: 16px; line-height: 1.7; margin: 0 0 24px;">
+                You've just taken the first step toward building generational wealth.
+                Small seeds grow mighty trees, and your journey starts now.
+              </p>
+
+              <!-- Highlight Box -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.3); border-radius: 16px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 24px;">
+                    <p style="color: #34d399; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px;">
+                      Did You Know?
+                    </p>
+                    <p style="color: #ffffff; font-size: 18px; font-weight: 500; margin: 0;">
+                      $100/month invested at 7% return becomes <span style="color: #fbbf24;">$121,997</span> in 30 years,
+                      and could grow to <span style="color: #fbbf24;">$1.8 million</span> by your grandchildren's generation!
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="color: #94a3b8; font-size: 16px; line-height: 1.7; margin: 0 0 32px;">
+                With Seedling, you can visualize exactly how your financial decisions today
+                ripple through generations. Watch your family tree grow—or wither—based on
+                the choices you make.
+              </p>
+
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="https://seedling-1m8.pages.dev/app"
+                       style="display: inline-block; padding: 16px 32px; background: linear-gradient(135deg, #34d399 0%, #14b8a6 100%); color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; border-radius: 12px; box-shadow: 0 4px 24px rgba(52, 211, 153, 0.3);">
+                      Start Growing Your Legacy →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- What's Next Section -->
+          <tr>
+            <td style="padding: 0 40px 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="border-top: 1px solid rgba(148, 163, 184, 0.2); padding-top: 32px;">
+                <tr>
+                  <td>
+                    <p style="color: #ffffff; font-size: 18px; font-weight: 600; margin: 0 0 16px;">
+                      What You Can Do with Seedling:
+                    </p>
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding: 8px 0; color: #94a3b8; font-size: 15px;">
+                          <span style="color: #34d399; margin-right: 8px;">✓</span>
+                          Run wealth simulations across 4+ generations
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #94a3b8; font-size: 15px;">
+                          <span style="color: #34d399; margin-right: 8px;">✓</span>
+                          Explore 12 pre-built "what-if" scenarios
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #94a3b8; font-size: 15px;">
+                          <span style="color: #34d399; margin-right: 8px;">✓</span>
+                          Get advice from our AI Financial Coach
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #94a3b8; font-size: 15px;">
+                          <span style="color: #34d399; margin-right: 8px;">✓</span>
+                          Generate professional PDF wealth reports
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px 40px; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(148, 163, 184, 0.1);">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="text-align: center;">
+                    <p style="color: #64748b; font-size: 13px; margin: 0 0 8px;">
+                      You're receiving this because you signed up at seedling-1m8.pages.dev
+                    </p>
+                    <p style="color: #64748b; font-size: 13px; margin: 0;">
+                      Built with 💚 for first-generation wealth builders
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+
+    const getWelcomeEmailText = (name) => `
+Welcome to Seedling${name ? `, ${name}` : ''}!
+
+You've just taken the first step toward building generational wealth.
+Small seeds grow mighty trees, and your journey starts now.
+
+DID YOU KNOW?
+$100/month invested at 7% return becomes $121,997 in 30 years,
+and could grow to $1.8 million by your grandchildren's generation!
+
+With Seedling, you can visualize exactly how your financial decisions
+today ripple through generations.
+
+Start Growing Your Legacy: https://seedling-1m8.pages.dev/app
+
+WHAT YOU CAN DO WITH SEEDLING:
+✓ Run wealth simulations across 4+ generations
+✓ Explore 12 pre-built "what-if" scenarios
+✓ Get advice from our AI Financial Coach
+✓ Generate professional PDF wealth reports
+
+---
+You're receiving this because you signed up at seedling-1m8.pages.dev
+Built with love for first-generation wealth builders
+`;
+
+    // Send welcome email via MailChannels (Cloudflare Workers integration)
+    async function sendWelcomeEmail(email, name, env) {
+      const fromEmail = env.EMAIL_FROM || "hello@seedling-app.com";
+      const fromName = env.EMAIL_FROM_NAME || "Seedling";
+
+      try {
+        const response = await fetch("https://api.mailchannels.net/tx/v1/send", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            personalizations: [
+              {
+                to: [{ email: email, name: name || "Friend" }],
+              },
+            ],
+            from: {
+              email: fromEmail,
+              name: fromName,
+            },
+            subject: "🌱 Welcome to Seedling - Your Wealth Journey Begins!",
+            content: [
+              {
+                type: "text/plain",
+                value: getWelcomeEmailText(name),
+              },
+              {
+                type: "text/html",
+                value: getWelcomeEmailHTML(name),
+              },
+            ],
+          }),
+        });
+
+        if (response.status === 202 || response.status === 200) {
+          return { sent: true };
+        } else {
+          const errorText = await response.text();
+          console.error("MailChannels error:", response.status, errorText);
+          return { sent: false, error: errorText, status: response.status };
+        }
+      } catch (error) {
+        console.error("Email send error:", error);
+        return { sent: false, error: error.message };
+      }
+    }
+
     // ============== EMAIL SIGNUP ENDPOINTS ==============
 
     // Subscribe to newsletter
@@ -680,6 +890,10 @@ export default {
         const list = existingList ? JSON.parse(existingList) : [];
         list.push({ email: lead.email, subscribedAt: lead.subscribedAt });
         await env.LEADS.put(listKey, JSON.stringify(list));
+
+        // Email sending disabled for now - templates ready in sendWelcomeEmail()
+        // To enable: configure EMAIL_FROM env var and uncomment below
+        // const emailResult = await sendWelcomeEmail(lead.email, lead.name, env);
 
         return jsonResponse({
           success: true,
