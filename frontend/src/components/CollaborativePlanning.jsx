@@ -187,10 +187,13 @@ const CollaborativePlanning = ({ onSimulationUpdate }) => {
   const [newMessage, setNewMessage] = useState('');
   const [activities, setActivities] = useState([]);
   const [sharedParams, setSharedParams] = useState({
-    startingAge: 30,
-    startingNetWorth: 50000,
-    annualIncome: 75000,
-    savingsRate: 20,
+    name: 'Family',
+    age: 30,
+    income: 75000,
+    savings: 50000,
+    debt: 10000,
+    education: 'bachelors',
+    financial_literacy: 0.6,
     monthlyHabitChange: 200,
     generations: 4,
   });
@@ -577,48 +580,48 @@ const CollaborativePlanning = ({ onSimulationUpdate }) => {
 
             <div className="grid md:grid-cols-2 gap-4">
               <CollaborativeSlider
-                label="Starting Age"
-                value={sharedParams.startingAge}
+                label="Age"
+                value={sharedParams.age}
                 min={18}
                 max={65}
                 step={1}
                 unit=" years"
                 users={users}
                 currentUserId={currentUser?.id}
-                onChange={(v) => handleParamChange('startingAge', v)}
-              />
-              <CollaborativeSlider
-                label="Starting Net Worth"
-                value={sharedParams.startingNetWorth}
-                min={0}
-                max={500000}
-                step={5000}
-                unit="$"
-                users={users}
-                currentUserId={currentUser?.id}
-                onChange={(v) => handleParamChange('startingNetWorth', v)}
+                onChange={(v) => handleParamChange('age', v)}
               />
               <CollaborativeSlider
                 label="Annual Income"
-                value={sharedParams.annualIncome}
+                value={sharedParams.income}
                 min={30000}
                 max={500000}
                 step={5000}
                 unit="$"
                 users={users}
                 currentUserId={currentUser?.id}
-                onChange={(v) => handleParamChange('annualIncome', v)}
+                onChange={(v) => handleParamChange('income', v)}
               />
               <CollaborativeSlider
-                label="Savings Rate"
-                value={sharedParams.savingsRate}
-                min={5}
-                max={50}
-                step={1}
-                unit="%"
+                label="Current Savings"
+                value={sharedParams.savings}
+                min={0}
+                max={500000}
+                step={5000}
+                unit="$"
                 users={users}
                 currentUserId={currentUser?.id}
-                onChange={(v) => handleParamChange('savingsRate', v)}
+                onChange={(v) => handleParamChange('savings', v)}
+              />
+              <CollaborativeSlider
+                label="Current Debt"
+                value={sharedParams.debt}
+                min={0}
+                max={200000}
+                step={5000}
+                unit="$"
+                users={users}
+                currentUserId={currentUser?.id}
+                onChange={(v) => handleParamChange('debt', v)}
               />
               <CollaborativeSlider
                 label="Monthly Habit Change"

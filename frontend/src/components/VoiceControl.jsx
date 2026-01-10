@@ -179,10 +179,13 @@ const VoiceControl = ({ onSimulationUpdate }) => {
   const [audioLevel, setAudioLevel] = useState(0);
   const [commandHistory, setCommandHistory] = useState([]);
   const [currentParams, setCurrentParams] = useState({
-    startingAge: 30,
-    startingNetWorth: 10000,
-    annualIncome: 75000,
-    savingsRate: 20,
+    name: 'You',
+    age: 30,
+    income: 75000,
+    savings: 10000,
+    debt: 15000,
+    education: 'bachelors',
+    financial_literacy: 0.5,
     monthlyHabitChange: 200,
     generations: 4,
   });
@@ -310,19 +313,23 @@ const VoiceControl = ({ onSimulationUpdate }) => {
               setCurrentParams(prev => ({ ...prev, monthlyHabitChange: extractedData.monthlySavings }));
               break;
             case 'SET_STARTING_AMOUNT':
-              setCurrentParams(prev => ({ ...prev, startingNetWorth: extractedData.startingAmount }));
+              setCurrentParams(prev => ({ ...prev, savings: extractedData.startingAmount }));
               break;
             case 'SET_AGE':
-              setCurrentParams(prev => ({ ...prev, startingAge: extractedData.age }));
+              setCurrentParams(prev => ({ ...prev, age: extractedData.age }));
               break;
             case 'SET_GENERATIONS':
               setCurrentParams(prev => ({ ...prev, generations: extractedData.generations }));
               break;
             case 'SET_INCOME':
-              setCurrentParams(prev => ({ ...prev, annualIncome: extractedData.income }));
+              setCurrentParams(prev => ({ ...prev, income: extractedData.income }));
               break;
             case 'SET_SAVINGS_RATE':
-              setCurrentParams(prev => ({ ...prev, savingsRate: extractedData.savingsRate }));
+              // Convert savings rate to actual savings amount based on income
+              setCurrentParams(prev => ({
+                ...prev,
+                savings: Math.round(prev.income * (extractedData.savingsRate / 100))
+              }));
               break;
             case 'HABIT_CHANGE':
               setCurrentParams(prev => ({ ...prev, monthlyHabitChange: extractedData.habitSavings }));
@@ -334,10 +341,13 @@ const VoiceControl = ({ onSimulationUpdate }) => {
               break;
             case 'RESET':
               setCurrentParams({
-                startingAge: 30,
-                startingNetWorth: 10000,
-                annualIncome: 75000,
-                savingsRate: 20,
+                name: 'You',
+                age: 30,
+                income: 75000,
+                savings: 10000,
+                debt: 15000,
+                education: 'bachelors',
+                financial_literacy: 0.5,
                 monthlyHabitChange: 200,
                 generations: 4,
               });
@@ -557,24 +567,24 @@ const VoiceControl = ({ onSimulationUpdate }) => {
         <h3 className="text-lg font-semibold text-white mb-4">Current Parameters</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div className="p-3 rounded-xl bg-slate-800/50">
-            <div className="text-slate-400 text-sm">Starting Age</div>
-            <div className="text-white font-bold text-xl">{currentParams.startingAge}</div>
+            <div className="text-slate-400 text-sm">Age</div>
+            <div className="text-white font-bold text-xl">{currentParams.age}</div>
           </div>
           <div className="p-3 rounded-xl bg-slate-800/50">
-            <div className="text-slate-400 text-sm">Starting Net Worth</div>
+            <div className="text-slate-400 text-sm">Current Savings</div>
             <div className="text-seedling-400 font-bold text-xl">
-              {formatCurrency(currentParams.startingNetWorth, currency)}
+              {formatCurrency(currentParams.savings, currency)}
             </div>
           </div>
           <div className="p-3 rounded-xl bg-slate-800/50">
             <div className="text-slate-400 text-sm">Annual Income</div>
             <div className="text-white font-bold text-xl">
-              {formatCurrency(currentParams.annualIncome, currency)}
+              {formatCurrency(currentParams.income, currency)}
             </div>
           </div>
           <div className="p-3 rounded-xl bg-slate-800/50">
-            <div className="text-slate-400 text-sm">Savings Rate</div>
-            <div className="text-purple-400 font-bold text-xl">{currentParams.savingsRate}%</div>
+            <div className="text-slate-400 text-sm">Current Debt</div>
+            <div className="text-red-400 font-bold text-xl">{formatCurrency(currentParams.debt, currency)}</div>
           </div>
           <div className="p-3 rounded-xl bg-slate-800/50">
             <div className="text-slate-400 text-sm">Monthly Habit Change</div>
