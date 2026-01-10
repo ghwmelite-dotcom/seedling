@@ -85,15 +85,19 @@ function AppContent() {
   };
 
   const handleScenarioRun = (scenario) => {
-    // Convert scenario params to simulation format
+    // Convert scenario params to simulation format with correct property names
+    const scenarioParams = scenario.params.scenario;
     const formData = {
-      startingAge: 30,
-      startingNetWorth: 50000,
-      annualIncome: 75000,
-      savingsRate: scenario.params.scenario.savingsRate || 20,
-      monthlyHabitChange: 200,
+      name: 'You',
+      age: scenarioParams.startAge || scenarioParams.homePurchaseAge || 30,
+      income: scenarioParams.startingIncome || scenarioParams.monthlyIncome * 12 || 75000,
+      savings: scenarioParams.monthlySavings * 12 || 10000,
+      debt: scenarioParams.studentLoans || 0,
+      education: scenarioParams.education || 'bachelors',
+      financial_literacy: scenarioParams.financialLiteracy === 'high' ? 0.8 :
+                          scenarioParams.financialLiteracy === 'low' ? 0.3 : 0.5,
+      monthlyHabitChange: scenarioParams.monthlySavings || 200,
       generations: 4,
-      ...scenario.params.scenario,
     };
     handleSimulation(formData);
     setActivePanel('simulator');
