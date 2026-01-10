@@ -1125,6 +1125,198 @@ Built with love for first-generation wealth builders
       }
     }
 
+    // ============== AI ENDPOINTS (Cloudflare Workers AI - Llama 3) ==============
+
+    // AI Chat endpoint for AI Coach
+    if (path === "/api/ai/chat" && method === "POST") {
+      try {
+        const body = await request.json();
+        const { messages, context } = body;
+
+        if (!messages || !Array.isArray(messages)) {
+          return jsonResponse({ error: "Messages array required" }, 400);
+        }
+
+        // Build system prompt with financial advisor context
+        const systemPrompt = `You are an expert AI Financial Coach for Seedling, a generational wealth planning app. Your role is to provide personalized, actionable financial advice.
+
+Key principles:
+- Focus on long-term, generational wealth building
+- Emphasize compound growth and the power of small habits
+- Be encouraging but realistic about financial outcomes
+- Use specific numbers and examples when possible
+- Reference how decisions impact future generations
+- Keep responses concise but informative (2-3 paragraphs max)
+
+${context ? `Current user context: ${JSON.stringify(context)}` : ''}
+
+Respond in a friendly, professional tone. Use markdown formatting for emphasis and structure.`;
+
+        // Call Cloudflare Workers AI with Llama 3
+        const response = await env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+          messages: [
+            { role: "system", content: systemPrompt },
+            ...messages.map(m => ({ role: m.role, content: m.content }))
+          ],
+          max_tokens: 1024,
+          temperature: 0.7,
+        });
+
+        return jsonResponse({
+          success: true,
+          response: response.response,
+          model: "llama-3.1-8b-instruct"
+        });
+      } catch (e) {
+        console.error("AI Chat error:", e);
+        return jsonResponse({ error: "AI service error: " + e.message }, 500);
+      }
+    }
+
+    // AI Story Generation for Family Chronicles
+    if (path === "/api/ai/story" && method === "POST") {
+      try {
+        const body = await request.json();
+        const { member, generation, scenario, tone } = body;
+
+        const prompt = `Write a compelling, emotional family story about a descendant in a generational wealth simulation.
+
+Character Details:
+- Name: ${member?.name || 'Alex'}
+- Generation: ${generation || 1} (${generation === 0 ? 'founder' : `${generation} generation${generation > 1 ? 's' : ''} later`})
+- Age: ${member?.age || 35}
+- Net Worth: $${(member?.netWorth || 50000).toLocaleString()}
+- Financial Health: ${member?.financialHealth || 'stable'}
+- Owns Home: ${member?.ownsHome ? 'Yes' : 'No'}
+- Education: ${member?.education || 'bachelors'}
+
+Scenario: ${scenario || 'Building wealth through disciplined saving'}
+Tone: ${tone || 'hopeful and inspiring'}
+
+Write a 2-3 paragraph narrative story about this person's life, focusing on:
+1. How their financial decisions shaped their life
+2. The legacy they're building for future generations
+3. Specific moments that defined their wealth journey
+
+Make it personal, emotional, and inspiring. Use vivid details.`;
+
+        const response = await env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+          messages: [
+            { role: "system", content: "You are a creative writer specializing in compelling family narratives about wealth building and generational legacy. Write emotionally resonant stories that inspire readers to think about their own financial legacy." },
+            { role: "user", content: prompt }
+          ],
+          max_tokens: 1024,
+          temperature: 0.8,
+        });
+
+        return jsonResponse({
+          success: true,
+          story: response.response,
+          model: "llama-3.1-8b-instruct"
+        });
+      } catch (e) {
+        console.error("AI Story error:", e);
+        return jsonResponse({ error: "AI service error: " + e.message }, 500);
+      }
+    }
+
+    // AI Life Event Prediction
+    if (path === "/api/ai/predict-events" && method === "POST") {
+      try {
+        const body = await request.json();
+        const { age, income, netWorth, hasHome, education, existingEvents } = body;
+
+        const prompt = `Based on this financial profile, predict the 5 most likely major life expenses in the next 20 years:
+
+Profile:
+- Current Age: ${age || 30}
+- Annual Income: $${(income || 75000).toLocaleString()}
+- Net Worth: $${(netWorth || 50000).toLocaleString()}
+- Homeowner: ${hasHome ? 'Yes' : 'No'}
+- Education: ${education || 'bachelors'}
+${existingEvents ? `- Already planned: ${existingEvents.join(', ')}` : ''}
+
+For each predicted event, provide:
+1. Event name
+2. Estimated age when it occurs
+3. Estimated cost
+4. Probability (high/medium/low)
+5. Brief reasoning
+
+Format as JSON array: [{"event": "...", "age": 35, "cost": 50000, "probability": "high", "reason": "..."}]`;
+
+        const response = await env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+          messages: [
+            { role: "system", content: "You are a financial planning AI that predicts major life expenses. Always respond with valid JSON only, no markdown formatting." },
+            { role: "user", content: prompt }
+          ],
+          max_tokens: 1024,
+          temperature: 0.6,
+        });
+
+        // Try to parse the response as JSON
+        let events;
+        try {
+          // Extract JSON from response
+          const jsonMatch = response.response.match(/\[[\s\S]*\]/);
+          events = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
+        } catch {
+          events = [];
+        }
+
+        return jsonResponse({
+          success: true,
+          events,
+          rawResponse: response.response,
+          model: "llama-3.1-8b-instruct"
+        });
+      } catch (e) {
+        console.error("AI Predict error:", e);
+        return jsonResponse({ error: "AI service error: " + e.message }, 500);
+      }
+    }
+
+    // AI Ancestor Story Generation
+    if (path === "/api/ai/ancestor-story" && method === "POST") {
+      try {
+        const body = await request.json();
+        const { ancestor, era, decisions, outcome } = body;
+
+        const prompt = `Write a historical narrative about an ancestor's financial journey:
+
+Ancestor: ${ancestor?.name || 'Great-Grandparent'}
+Era: ${era || '1950s America'}
+Key Financial Decisions: ${decisions?.join(', ') || 'saved diligently, bought property'}
+Financial Outcome: ${outcome || 'Built modest wealth for next generation'}
+
+Write a 2-paragraph story in a historical, reflective tone. Include:
+- The economic context of their era
+- Specific challenges they overcame
+- How their decisions impacted future generations
+- A memorable quote or philosophy they lived by
+
+Make it feel like a family history being passed down.`;
+
+        const response = await env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+          messages: [
+            { role: "system", content: "You are a family historian writing compelling narratives about ancestors and their financial legacy. Write with warmth, respect, and historical accuracy." },
+            { role: "user", content: prompt }
+          ],
+          max_tokens: 768,
+          temperature: 0.8,
+        });
+
+        return jsonResponse({
+          success: true,
+          story: response.response,
+          model: "llama-3.1-8b-instruct"
+        });
+      } catch (e) {
+        console.error("AI Ancestor error:", e);
+        return jsonResponse({ error: "AI service error: " + e.message }, 500);
+      }
+    }
+
     // ============== PUSH NOTIFICATION ENDPOINTS ==============
 
     // Store push subscription

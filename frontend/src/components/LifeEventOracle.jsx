@@ -347,15 +347,71 @@ const LifeEventOracle = ({ onAddToSimulation }) => {
   const { simulation, currency } = useStore();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [viewMode, setViewMode] = useState('cards'); // 'cards' or 'timeline'
+  const [aiPredictions, setAiPredictions] = useState([]);
+  const [isLoadingAI, setIsLoadingAI] = useState(false);
+  const [useAI, setUseAI] = useState(false);
 
-  const currentAge = simulation?.scenario?.tree?.age || 30;
-  const income = 75000; // Could be from simulation
+  // API base URL
+  const API_URL = import.meta.env.VITE_API_URL || 'https://seedling-api.anthropic-code.workers.dev';
+
+  const currentAge = simulation?.scenario?.tree?.currentAge || simulation?.scenario?.tree?.age || 30;
+  const income = simulation?.scenario?.tree?.income || 75000;
   const netWorth = simulation?.scenario?.tree?.netWorth || 50000;
+  const hasHome = simulation?.scenario?.tree?.ownsHome || false;
+  const education = simulation?.scenario?.tree?.education || 'bachelors';
+
+  // Fetch AI predictions
+  const fetchAIPredictions = async () => {
+    setIsLoadingAI(true);
+    try {
+      const response = await fetch(`${API_URL}/api/ai/predict-events`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          age: currentAge,
+          income,
+          netWorth,
+          hasHome,
+          education,
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.events?.length > 0) {
+        // Transform AI events to match our format
+        const transformed = data.events.map((event, index) => ({
+          name: event.event,
+          predictedAge: event.age,
+          predictedCost: event.cost,
+          probability: event.probability === 'high' ? 85 : event.probability === 'medium' ? 60 : 35,
+          category: 'ai',
+          icon: '🤖',
+          color: 'from-purple-500 to-pink-600',
+          yearsUntil: event.age - currentAge,
+          isPast: event.age < currentAge,
+          isImminent: event.age - currentAge >= 0 && event.age - currentAge <= 5,
+          reason: event.reason,
+          isAI: true,
+        }));
+        setAiPredictions(transformed);
+        setUseAI(true);
+      }
+    } catch (error) {
+      console.error('AI prediction failed:', error);
+    }
+    setIsLoadingAI(false);
+  };
 
   // Generate predictions
   const predictions = useMemo(() => {
-    return predictEvents(currentAge, income, netWorth);
-  }, [currentAge, income, netWorth]);
+    const basePredictions = predictEvents(currentAge, income, netWorth);
+    if (useAI && aiPredictions.length > 0) {
+      // Merge AI predictions with base predictions, AI first
+      return [...aiPredictions, ...basePredictions];
+    }
+    return basePredictions;
+  }, [currentAge, income, netWorth, useAI, aiPredictions]);
 
   // Filter predictions
   const filteredPredictions = selectedCategory === 'all'
@@ -409,26 +465,57 @@ const LifeEventOracle = ({ onAddToSimulation }) => {
             </div>
           </div>
 
-          {/* View toggle */}
-          <div className="flex items-center gap-2 bg-slate-800 rounded-xl p-1">
+          <div className="flex items-center gap-3">
+            {/* AI Predictions Button */}
             <motion.button
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => setViewMode('cards')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                viewMode === 'cards' ? 'bg-seedling-500 text-white' : 'text-slate-400'
+              onClick={fetchAIPredictions}
+              disabled={isLoadingAI}
+              className={`px-4 py-2 rounded-xl transition-colors flex items-center gap-2 ${
+                useAI && aiPredictions.length > 0
+                  ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+                  : 'bg-slate-700/50 text-slate-300 hover:text-white'
               }`}
             >
-              Cards
+              {isLoadingAI ? (
+                <>
+                  <motion.div
+                    className="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  />
+                  Thinking...
+                </>
+              ) : (
+                <>
+                  <span className="text-lg">🤖</span>
+                  {useAI ? 'AI Active' : 'Get AI Predictions'}
+                </>
+              )}
             </motion.button>
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setViewMode('timeline')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                viewMode === 'timeline' ? 'bg-seedling-500 text-white' : 'text-slate-400'
-              }`}
-            >
-              Timeline
-            </motion.button>
+
+            {/* View toggle */}
+            <div className="flex items-center gap-2 bg-slate-800 rounded-xl p-1">
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setViewMode('cards')}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  viewMode === 'cards' ? 'bg-seedling-500 text-white' : 'text-slate-400'
+                }`}
+              >
+                Cards
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setViewMode('timeline')}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  viewMode === 'timeline' ? 'bg-seedling-500 text-white' : 'text-slate-400'
+                }`}
+              >
+                Timeline
+              </motion.button>
+            </div>
           </div>
         </div>
       </motion.div>

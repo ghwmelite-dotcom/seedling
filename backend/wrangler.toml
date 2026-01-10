@@ -16,3 +16,7 @@ id = "1b3f7bc7109b4534981b7cbed268daef"
 [[kv_namespaces]]
 binding = "PUSH_SUBSCRIPTIONS"
 id = "8fcc0a3e158a4cbd9bd3a586a3f4331e"
+
+# Cloudflare Workers AI binding for Llama 3
+[ai]
+binding = "AI"

@@ -350,9 +350,42 @@ const FamilyChronicles = () => {
   const [activeStoryIndex, setActiveStoryIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [useAI, setUseAI] = useState(true);
+
+  // API base URL
+  const API_URL = import.meta.env.VITE_API_URL || 'https://seedling-api.anthropic-code.workers.dev';
+
+  // Fetch AI-generated story for a member
+  const fetchAIStory = async (member, generation) => {
+    try {
+      const response = await fetch(`${API_URL}/api/ai/story`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          member: {
+            name: member.name,
+            age: member.currentAge || 35,
+            netWorth: member.netWorth,
+            financialHealth: member.financialHealth,
+            ownsHome: member.ownsHome,
+            education: member.education,
+          },
+          generation,
+          scenario: 'Building generational wealth through disciplined saving and smart investing',
+          tone: member.financialHealth === 'thriving' ? 'triumphant and inspiring' : 'hopeful and determined',
+        })
+      });
+
+      const data = await response.json();
+      return data.success ? data.story : null;
+    } catch (error) {
+      console.error('AI Story generation failed:', error);
+      return null;
+    }
+  };
 
   // Generate chronicles from simulation data
-  const generateChronicles = useCallback(() => {
+  const generateChronicles = useCallback(async () => {
     if (!simulation?.scenario?.tree) return;
 
     setIsGenerating(true);
@@ -377,19 +410,38 @@ const FamilyChronicles = () => {
 
     const members = extractMembers(simulation.scenario.tree);
 
-    // Generate chronicle for each member
-    setTimeout(() => {
-      const newChronicles = members.map((member, index) =>
-        generateStory(member, member.generation, simulation, currency)
-      );
+    // Generate chronicle for each member (with optional AI enhancement)
+    const newChronicles = [];
 
-      setChronicles(newChronicles);
-      if (newChronicles.length > 0) {
-        setSelectedChronicle(newChronicles[0]);
+    for (const member of members) {
+      const baseChronicle = generateStory(member, member.generation, simulation, currency);
+
+      // Try to get AI-generated story for the first 3 members (to avoid rate limits)
+      if (useAI && newChronicles.length < 3) {
+        const aiStory = await fetchAIStory(member, member.generation);
+        if (aiStory) {
+          // Add AI story as a special chapter
+          baseChronicle.stories.unshift({
+            phase: 'AI Chronicle',
+            year: baseChronicle.birthYear + 30,
+            age: 'Full Story',
+            text: aiStory,
+            icon: '🤖',
+            highlight: true,
+            isAI: true,
+          });
+        }
       }
-      setIsGenerating(false);
-    }, 1000);
-  }, [simulation, currency]);
+
+      newChronicles.push(baseChronicle);
+    }
+
+    setChronicles(newChronicles);
+    if (newChronicles.length > 0) {
+      setSelectedChronicle(newChronicles[0]);
+    }
+    setIsGenerating(false);
+  }, [simulation, currency, useAI, API_URL]);
 
   // Auto-generate on simulation change
   useEffect(() => {
@@ -475,6 +527,21 @@ const FamilyChronicles = () => {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* AI Toggle */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setUseAI(!useAI)}
+              className={`px-4 py-2 rounded-xl transition-colors flex items-center gap-2 ${
+                useAI
+                  ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+                  : 'bg-slate-700/50 text-slate-400'
+              }`}
+            >
+              <span className="text-lg">🤖</span>
+              {useAI ? 'AI On' : 'AI Off'}
+            </motion.button>
+
             {/* Regenerate button */}
             <motion.button
               whileHover={{ scale: 1.05 }}

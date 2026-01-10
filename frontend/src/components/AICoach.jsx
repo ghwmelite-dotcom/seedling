@@ -17,136 +17,65 @@ const AICoach = ({ simulation, onScenarioSuggestion }) => {
     scrollToBottom();
   }, [chatHistory]);
 
-  // AI Response Generator (simulated - would connect to Claude API in production)
+  // API base URL
+  const API_URL = import.meta.env.VITE_API_URL || 'https://seedling-api.anthropic-code.workers.dev';
+
+  // AI Response Generator using Cloudflare Workers AI (Llama 3)
   const generateAIResponse = async (userMessage) => {
     setIsTyping(true);
 
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 1500));
+    try {
+      // Build context from simulation data
+      const context = simulation ? {
+        netWorth: simulation.baseline?.tree?.netWorth,
+        income: simulation.baseline?.tree?.income,
+        savings: simulation.baseline?.tree?.savings,
+        debt: simulation.baseline?.tree?.debt,
+        generations: simulation.baseline?.tree?.children?.length || 0,
+        financialHealth: simulation.baseline?.tree?.financialHealth,
+      } : null;
 
-    const lowerMessage = userMessage.toLowerCase();
-    let response = '';
+      // Get recent chat history for context
+      const recentMessages = chatHistory.slice(-6).map(m => ({
+        role: m.role,
+        content: m.content
+      }));
 
-    // Smart contextual responses based on simulation data and user query
-    if (lowerMessage.includes('invest') || lowerMessage.includes('saving')) {
-      const currentNetWorth = simulation?.baseline?.members?.[0]?.netWorth || 50000;
-      const suggestedInvestment = Math.round(currentNetWorth * 0.15 / 12);
-      response = `Great question! Based on your current profile, I'd suggest starting with **$${suggestedInvestment}/month** in diversified index funds.
+      // Add current message
+      recentMessages.push({ role: 'user', content: userMessage });
 
-Here's the magic: At a 7% average return, that could grow to **$${(suggestedInvestment * 12 * 30 * 1.07).toLocaleString()}** over 30 years!
+      const response = await fetch(`${API_URL}/api/ai/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: recentMessages,
+          context
+        })
+      });
 
-**Quick Win:** Try adjusting the "Monthly Savings" in the simulator to see how this compounds across generations.
+      const data = await response.json();
 
-Want me to create a scenario showing this impact?`;
-    } else if (lowerMessage.includes('house') || lowerMessage.includes('home') || lowerMessage.includes('property')) {
-      response = `🏠 **Real Estate: The Generational Wealth Builder**
+      if (data.success && data.response) {
+        setIsTyping(false);
+        return data.response;
+      } else {
+        throw new Error(data.error || 'AI service unavailable');
+      }
+    } catch (error) {
+      console.error('AI Chat error:', error);
+      setIsTyping(false);
 
-Homeownership is one of the most powerful wealth-building tools:
+      // Fallback to helpful error message
+      return `I'm having trouble connecting to the AI service right now. Here are some quick tips while we fix this:
 
-• **Forced Savings:** Mortgage payments build equity
-• **Appreciation:** Historically 3-5% annually
-• **Inheritance:** Assets pass to next generation
-• **Tax Benefits:** Mortgage interest deductions
+**Getting Started with Wealth Building:**
+1. Start with an emergency fund (3-6 months expenses)
+2. Pay off high-interest debt first
+3. Invest consistently, even small amounts
+4. Use the Simulator to see compound growth!
 
-**Simulation Tip:** Try setting "Home Purchase Age" to 28-32 and watch how it affects your family tree!
-
-The data shows families with homeownership often have **3-4x higher net worth** by generation 3.`;
-    } else if (lowerMessage.includes('education') || lowerMessage.includes('college') || lowerMessage.includes('degree')) {
-      response = `📚 **Education & Earning Potential**
-
-Education is a multiplier for generational wealth:
-
-| Education Level | Avg Lifetime Earnings |
-|-----------------|----------------------|
-| High School | $1.3M |
-| Bachelor's | $2.3M |
-| Master's | $2.7M |
-| Professional | $3.6M |
-
-**Key Insight:** Each generation that attains higher education typically increases family wealth by **40-60%**.
-
-Try adjusting the income levels in your simulation to model this effect!`;
-    } else if (lowerMessage.includes('start') || lowerMessage.includes('begin') || lowerMessage.includes('first')) {
-      response = `🌱 **Starting Your Wealth Journey**
-
-Here's a proven framework:
-
-1. **Emergency Fund First** (3-6 months expenses)
-2. **Eliminate High-Interest Debt** (>7% APR)
-3. **Maximize Employer 401k Match** (free money!)
-4. **Open a Roth IRA** ($6,500/year limit)
-5. **Invest Consistently** (automate it!)
-
-**Your Simulation Strategy:**
-Set "Starting Savings Rate" to 20% and watch the compound effect over 4 generations!
-
-The earlier you start, the more generations benefit. Even $100/month at age 22 beats $500/month at age 40.`;
-    } else if (lowerMessage.includes('generation') || lowerMessage.includes('legacy') || lowerMessage.includes('inherit')) {
-      response = `🌳 **Building Multi-Generational Wealth**
-
-The wealthy don't just save—they create **systems**:
-
-1. **Education Funds:** 529 plans for future generations
-2. **Family Trusts:** Protect and transfer assets
-3. **Life Insurance:** Create instant inheritance
-4. **Family Business:** Income that spans generations
-5. **Financial Literacy:** Teach money skills early
-
-**Powerful Insight:** The simulation shows that wealth typically multiplies when each generation:
-- Starts saving 5 years earlier
-- Increases savings rate by 5%
-- Passes down financial knowledge
-
-Would you like me to set up a "Legacy Builder" scenario?`;
-    } else if (lowerMessage.includes('habit') || lowerMessage.includes('coffee') || lowerMessage.includes('small')) {
-      response = `☕ **The Latte Factor: Small Changes, Big Impact**
-
-Here's the math on daily habits:
-
-| Daily Spend | Monthly | 30yr @ 7% |
-|-------------|---------|-----------|
-| $5 coffee | $150 | $170,000 |
-| $15 lunch | $450 | $510,000 |
-| $10 subscriptions | $300 | $340,000 |
-
-**Combined:** That's potentially **$1M+** from small daily choices!
-
-**Try This:** Use the Habit Calculator to see how your specific habits compound.
-
-The question isn't "Can I afford this?" It's "What is this costing my grandchildren?"`;
-    } else if (lowerMessage.includes('scenario') || lowerMessage.includes('what if')) {
-      response = `🎯 **Creating Powerful "What If" Scenarios**
-
-Great scenarios to explore:
-
-1. **Early Bird:** Start investing at 22 vs 32
-2. **Homeowner's Edge:** Buy at 28 vs rent forever
-3. **Education Multiplier:** College grad vs high school
-4. **Side Hustle:** +$500/month extra income
-5. **Frugal Family:** 30% savings rate vs 10%
-
-**Click on "Scenario Library"** in the sidebar to load pre-built simulations, or describe what you want to test and I'll help configure it!
-
-What specific "what if" are you curious about?`;
-    } else {
-      response = `I'm your AI Financial Coach! 🎯
-
-Here are some things I can help with:
-
-• **Investment Strategies** - "How should I start investing?"
-• **Real Estate** - "Should I buy a house?"
-• **Education ROI** - "Is college worth it?"
-• **Small Habits** - "How much does my coffee habit cost?"
-• **Generational Planning** - "How do I build a legacy?"
-• **Scenario Analysis** - "What if I saved more?"
-
-Just ask naturally, and I'll provide personalized insights based on your simulation!
-
-**Pro Tip:** The more specific your question, the better I can tailor my advice. Try: "What if I invested $300/month starting at age 25?"`;
+Try asking again in a moment, or explore the Scenario Library for pre-built wealth simulations.`;
     }
-
-    setIsTyping(false);
-    return response;
   };
 
   const handleSend = async () => {
