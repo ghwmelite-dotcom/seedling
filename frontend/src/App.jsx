@@ -25,6 +25,16 @@ import {
   OfflineIndicator,
   UpdateAvailable,
   NotificationSettings,
+  FamilyChronicles,
+  ARWealthGarden,
+  VoiceControl,
+  CollaborativePlanning,
+  TimeCapsule,
+  WealthSoundscapes,
+  LifeEventOracle,
+  BankIntegration,
+  AncestorMode,
+  NFTCertificates,
 } from './components';
 import { useApiHealth, useSimulation } from './hooks/useApi';
 import useStore from './store/useStore';
@@ -185,6 +195,36 @@ function AppContent() {
           <PDFReportGenerator simulation={result} />
         );
 
+      case 'chronicles':
+        return <FamilyChronicles simulation={result} />;
+
+      case 'garden':
+        return <ARWealthGarden simulation={result} />;
+
+      case 'voice':
+        return <VoiceControl simulation={result} onCommand={(cmd) => console.log('Voice command:', cmd)} />;
+
+      case 'collaborate':
+        return <CollaborativePlanning simulation={result} />;
+
+      case 'capsule':
+        return <TimeCapsule simulation={result} />;
+
+      case 'soundscapes':
+        return <WealthSoundscapes simulation={result} />;
+
+      case 'oracle':
+        return <LifeEventOracle simulation={result} />;
+
+      case 'bank':
+        return <BankIntegration simulation={result} />;
+
+      case 'ancestors':
+        return <AncestorMode simulation={result} />;
+
+      case 'nft':
+        return <NFTCertificates simulation={result} />;
+
       case 'settings':
         return (
           <div className="space-y-8">
@@ -250,6 +290,16 @@ function AppContent() {
                   {activePanel === 'achievements' && 'Track your progress and unlock rewards'}
                   {activePanel === 'coach' && 'Get personalized financial advice'}
                   {activePanel === 'report' && 'Generate professional PDF reports'}
+                  {activePanel === 'chronicles' && 'AI-generated stories of your descendants'}
+                  {activePanel === 'garden' && 'Watch your wealth grow in AR'}
+                  {activePanel === 'voice' && 'Control simulations with your voice'}
+                  {activePanel === 'collaborate' && 'Plan finances with your family'}
+                  {activePanel === 'capsule' && 'Send messages to future generations'}
+                  {activePanel === 'soundscapes' && 'Experience your wealth as music'}
+                  {activePanel === 'oracle' && 'Predict major life expenses'}
+                  {activePanel === 'bank' && 'Connect your bank accounts'}
+                  {activePanel === 'ancestors' && 'See how your ancestors built wealth'}
+                  {activePanel === 'nft' && 'Mint your achievements as NFTs'}
                   {activePanel === 'settings' && 'Customize your experience'}
                 </p>
               </div>

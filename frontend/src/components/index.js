@@ -29,3 +29,15 @@ export { default as ExchangeRateDisplay } from './ExchangeRateDisplay';
 export { default as PWAInstallPrompt } from './PWAInstallPrompt';
 export { default as OfflineIndicator, UpdateAvailable } from './OfflineIndicator';
 export { default as NotificationSettings } from './NotificationSettings';
+
+// Advanced feature components
+export { default as FamilyChronicles } from './FamilyChronicles';
+export { default as ARWealthGarden } from './ARWealthGarden';
+export { default as VoiceControl } from './VoiceControl';
+export { default as CollaborativePlanning } from './CollaborativePlanning';
+export { default as TimeCapsule } from './TimeCapsule';
+export { default as WealthSoundscapes } from './WealthSoundscapes';
+export { default as LifeEventOracle } from './LifeEventOracle';
+export { default as BankIntegration } from './BankIntegration';
+export { default as AncestorMode } from './AncestorMode';
+export { default as NFTCertificates } from './NFTCertificates';

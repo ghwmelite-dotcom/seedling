@@ -11,6 +11,16 @@ const navItems = [
   { id: 'achievements', label: 'Achievements', icon: '🏆', description: 'Your progress' },
   { id: 'coach', label: 'AI Coach', icon: '🤖', description: 'Get advice' },
   { id: 'report', label: 'Report', icon: '📄', description: 'Generate PDF' },
+  { id: 'chronicles', label: 'Chronicles', icon: '📖', description: 'AI family stories' },
+  { id: 'garden', label: 'AR Garden', icon: '🌳', description: '3D wealth tree' },
+  { id: 'voice', label: 'Voice Control', icon: '🎙️', description: 'Speak commands' },
+  { id: 'collaborate', label: 'Collaborate', icon: '👨‍👩‍👧‍👦', description: 'Plan together' },
+  { id: 'capsule', label: 'Time Capsule', icon: '💌', description: 'Future messages' },
+  { id: 'soundscapes', label: 'Soundscapes', icon: '🎵', description: 'Wealth music' },
+  { id: 'oracle', label: 'Life Oracle', icon: '🔮', description: 'Predict expenses' },
+  { id: 'bank', label: 'Bank Sync', icon: '🏦', description: 'Connect accounts' },
+  { id: 'ancestors', label: 'Ancestor Mode', icon: '👴', description: 'Reverse simulation' },
+  { id: 'nft', label: 'NFT Certs', icon: '🎖️', description: 'Mint achievements' },
   { id: 'settings', label: 'Settings', icon: '⚙️', description: 'Sound & more' },
 ];
 
