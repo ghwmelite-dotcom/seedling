@@ -73,9 +73,15 @@ function AppContent() {
   }, [result, setSimulation, playSound]);
 
   const handleSimulation = async (formData) => {
-    setLastHabitChange(formData.monthlyHabitChange);
+    setLastHabitChange(formData.monthlyHabitChange || 200);
     playSound('click');
     await runSimulation(formData);
+  };
+
+  // Handle simulation from Voice Control - runs simulation and navigates to results
+  const handleVoiceSimulation = async (formData) => {
+    await handleSimulation(formData);
+    setActivePanel('simulator');
   };
 
   const handleScenarioRun = (scenario) => {
@@ -202,7 +208,7 @@ function AppContent() {
         return <ARWealthGarden simulation={result} />;
 
       case 'voice':
-        return <VoiceControl simulation={result} onSimulationUpdate={handleSimulation} />;
+        return <VoiceControl simulation={result} onSimulationUpdate={handleVoiceSimulation} />;
 
       case 'collaborate':
         return <CollaborativePlanning simulation={result} />;
