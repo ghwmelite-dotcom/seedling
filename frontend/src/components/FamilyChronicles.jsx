@@ -353,7 +353,9 @@ const FamilyChronicles = () => {
   const [useAI, setUseAI] = useState(true);
 
   // API base URL
-  const API_URL = import.meta.env.VITE_API_URL || 'https://seedling-api.anthropic-code.workers.dev';
+  const API_URL = import.meta.env.PROD
+    ? 'https://seedling-api.ghwmelite.workers.dev'
+    : '/api';
 
   // Fetch AI-generated story for a member
   const fetchAIStory = async (member, generation) => {

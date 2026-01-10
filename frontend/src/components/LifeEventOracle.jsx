@@ -352,7 +352,9 @@ const LifeEventOracle = ({ onAddToSimulation }) => {
   const [useAI, setUseAI] = useState(false);
 
   // API base URL
-  const API_URL = import.meta.env.VITE_API_URL || 'https://seedling-api.anthropic-code.workers.dev';
+  const API_URL = import.meta.env.PROD
+    ? 'https://seedling-api.ghwmelite.workers.dev'
+    : '/api';
 
   const currentAge = simulation?.scenario?.tree?.currentAge || simulation?.scenario?.tree?.age || 30;
   const income = simulation?.scenario?.tree?.income || 75000;
