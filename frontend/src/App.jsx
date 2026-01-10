@@ -239,8 +239,8 @@ function AppContent() {
 
       case 'bank':
         return <BankIntegration simulation={result} onNetWorthUpdate={(realNetWorth) => {
-          // Update simulation with real net worth from bank
-          handleSimulation({
+          // Update simulation with real net worth from bank and navigate to results
+          handleVoiceSimulation({
             name: 'You',
             age: result?.scenario?.tree?.currentAge || 30,
             income: result?.scenario?.tree?.income || 75000,
