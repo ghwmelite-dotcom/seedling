@@ -221,12 +221,16 @@ function AppContent() {
 
       case 'oracle':
         return <LifeEventOracle simulation={result} onAddToSimulation={(event) => {
-          // Add life event to simulation by updating form and running
+          // Add life event to simulation by reducing savings by event cost
+          const currentSavings = result?.scenario?.tree?.netWorth || 50000;
           const currentParams = {
-            startingAge: result?.scenario?.tree?.currentAge || 30,
-            startingNetWorth: Math.max(0, (result?.scenario?.tree?.netWorth || 50000) - event.cost),
-            annualIncome: result?.scenario?.tree?.income || 75000,
-            savingsRate: 20,
+            name: 'You',
+            age: result?.scenario?.tree?.currentAge || 30,
+            income: result?.scenario?.tree?.income || 75000,
+            savings: Math.max(0, currentSavings - event.cost),
+            debt: result?.scenario?.tree?.debt || 15000,
+            education: 'bachelors',
+            financial_literacy: 0.5,
             monthlyHabitChange: 200,
             generations: 4,
           };
@@ -237,10 +241,13 @@ function AppContent() {
         return <BankIntegration simulation={result} onNetWorthUpdate={(realNetWorth) => {
           // Update simulation with real net worth from bank
           handleSimulation({
-            startingAge: 30,
-            startingNetWorth: realNetWorth,
-            annualIncome: 75000,
-            savingsRate: 20,
+            name: 'You',
+            age: result?.scenario?.tree?.currentAge || 30,
+            income: result?.scenario?.tree?.income || 75000,
+            savings: realNetWorth,
+            debt: 0,
+            education: 'bachelors',
+            financial_literacy: 0.5,
             monthlyHabitChange: 200,
             generations: 4,
           });
