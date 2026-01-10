@@ -344,7 +344,7 @@ const EventTimeline = ({ events, currentAge, currency }) => {
 
 // Main Life Event Oracle Component
 const LifeEventOracle = ({ onAddToSimulation }) => {
-  const { simulation, currency } = useStore();
+  const { simulation, currency, userCountry } = useStore();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [viewMode, setViewMode] = useState('cards'); // 'cards' or 'timeline'
   const [aiPredictions, setAiPredictions] = useState([]);
@@ -373,6 +373,7 @@ const LifeEventOracle = ({ onAddToSimulation }) => {
           netWorth,
           hasHome,
           education,
+          country: userCountry,
         })
       });
 

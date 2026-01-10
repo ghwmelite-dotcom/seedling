@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import useStore from '../store/useStore';
 
 const AICoach = ({ simulation, onScenarioSuggestion }) => {
-  const { chatHistory, addChatMessage, clearChatHistory } = useStore();
+  const { chatHistory, addChatMessage, clearChatHistory, userCountry } = useStore();
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -49,7 +49,8 @@ const AICoach = ({ simulation, onScenarioSuggestion }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: recentMessages,
-          context
+          context,
+          country: userCountry,
         })
       });
 

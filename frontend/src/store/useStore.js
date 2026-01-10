@@ -3,14 +3,20 @@ import { persist } from 'zustand/middleware';
 import { detectCurrencyFromLocale, getCurrencyFromCountry, DEFAULT_CURRENCY } from '../utils/format';
 import { fetchExchangeRates, convertCurrency as convertCurrencyUtil, FALLBACK_RATES } from '../utils/exchangeRates';
 
-// Detect currency from IP using free API
-const detectCurrencyFromIP = async () => {
+// Detect location from IP using free API
+const detectLocationFromIP = async () => {
   try {
     // Use ipapi.co for free IP geolocation
     const response = await fetch('https://ipapi.co/json/', { timeout: 3000 });
     const data = await response.json();
     if (data.country_code) {
-      return getCurrencyFromCountry(data.country_code);
+      return {
+        countryCode: data.country_code,
+        countryName: data.country_name,
+        city: data.city,
+        region: data.region,
+        currency: getCurrencyFromCountry(data.country_code),
+      };
     }
   } catch (e) {
     console.debug('IP detection failed, using locale fallback');
@@ -25,6 +31,10 @@ const useStore = create(
       currency: DEFAULT_CURRENCY,
       currencyAutoDetected: false,
       setCurrency: (currency) => set({ currency }),
+
+      // Location Settings (for AI localization)
+      userCountry: null, // { code: 'US', name: 'United States', city: 'New York', region: 'NY' }
+      setUserCountry: (country) => set({ userCountry: country }),
 
       // Exchange Rates
       exchangeRates: FALLBACK_RATES,
@@ -65,22 +75,38 @@ const useStore = create(
         );
       },
 
-      // Auto-detect currency on first visit
+      // Auto-detect currency and location on first visit
       autoDetectCurrency: async () => {
         const state = get();
         // Only auto-detect if not already detected
         if (state.currencyAutoDetected) return;
 
         // First try IP-based detection
-        const ipCurrency = await detectCurrencyFromIP();
-        if (ipCurrency) {
-          set({ currency: ipCurrency, currencyAutoDetected: true });
+        const location = await detectLocationFromIP();
+        if (location) {
+          set({
+            currency: location.currency,
+            currencyAutoDetected: true,
+            userCountry: {
+              code: location.countryCode,
+              name: location.countryName,
+              city: location.city,
+              region: location.region,
+            },
+          });
           return;
         }
 
         // Fallback to browser locale
         const localeCurrency = detectCurrencyFromLocale();
-        set({ currency: localeCurrency, currencyAutoDetected: true });
+        // Try to get country from locale
+        const locale = navigator.language || 'en-US';
+        const countryCode = locale.split('-')[1] || 'US';
+        set({
+          currency: localeCurrency,
+          currencyAutoDetected: true,
+          userCountry: { code: countryCode, name: null, city: null, region: null },
+        });
       },
 
       // Simulation State
@@ -144,6 +170,7 @@ const useStore = create(
       partialize: (state) => ({
         currency: state.currency,
         currencyAutoDetected: state.currencyAutoDetected,
+        userCountry: state.userCountry,
         soundEnabled: state.soundEnabled,
         musicEnabled: state.musicEnabled,
         volume: state.volume,

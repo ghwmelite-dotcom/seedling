@@ -18,17 +18,35 @@ const ECONOMIC_ERAS = [
   { year: 2020, name: 'Pandemic Era', growth: 0.02, inflation: 0.05, events: ['COVID-19', 'Remote work'] },
 ];
 
-// Generate ancestor based on historical context
-const generateAncestor = (generation, year, previousWealth = 0) => {
-  const era = ECONOMIC_ERAS.find(e => year >= e.year && year < e.year + 10) || ECONOMIC_ERAS[0];
-  const names = {
-    greatgreat: ['Elijah', 'Martha', 'Theodore', 'Eleanor', 'William', 'Margaret'],
-    great: ['Robert', 'Dorothy', 'James', 'Helen', 'Charles', 'Ruth'],
-    grand: ['Richard', 'Barbara', 'Thomas', 'Patricia', 'George', 'Nancy'],
-    parent: ['Michael', 'Linda', 'David', 'Susan', 'John', 'Karen'],
-  };
+// Country-specific ancestor names
+const COUNTRY_ANCESTOR_NAMES = {
+  US: { greatgreat: ['Elijah', 'Martha', 'Theodore', 'Eleanor'], great: ['Robert', 'Dorothy', 'James', 'Helen'], grand: ['Richard', 'Barbara', 'Thomas', 'Patricia'], parent: ['Michael', 'Linda', 'David', 'Susan'] },
+  GB: { greatgreat: ['Alfred', 'Edith', 'Arthur', 'Florence'], great: ['Harold', 'Doris', 'Frederick', 'Gladys'], grand: ['Ronald', 'Joan', 'Kenneth', 'Maureen'], parent: ['Andrew', 'Susan', 'Stephen', 'Julie'] },
+  CA: { greatgreat: ['George', 'Elsie', 'Henry', 'Mabel'], great: ['Donald', 'Shirley', 'Gordon', 'Jean'], grand: ['Brian', 'Sandra', 'Gary', 'Diane'], parent: ['Mark', 'Karen', 'Scott', 'Jennifer'] },
+  AU: { greatgreat: ['Herbert', 'Olive', 'Percy', 'Ivy'], great: ['Bruce', 'Shirley', 'Keith', 'Dawn'], grand: ['Trevor', 'Lorraine', 'Graeme', 'Christine'], parent: ['Shane', 'Michelle', 'Darren', 'Nicole'] },
+  DE: { greatgreat: ['Wilhelm', 'Gertrud', 'Heinrich', 'Hedwig'], great: ['Klaus', 'Ingrid', 'Dieter', 'Brigitte'], grand: ['Wolfgang', 'Renate', 'Jürgen', 'Monika'], parent: ['Thomas', 'Sabine', 'Andreas', 'Claudia'] },
+  FR: { greatgreat: ['Marcel', 'Germaine', 'Henri', 'Marguerite'], great: ['Jacques', 'Simone', 'Pierre', 'Monique'], grand: ['Jean-Pierre', 'Françoise', 'Alain', 'Martine'], parent: ['Philippe', 'Isabelle', 'Laurent', 'Nathalie'] },
+  JP: { greatgreat: ['Taro', 'Hana', 'Ichiro', 'Kiku'], great: ['Kenji', 'Yoshiko', 'Takeshi', 'Sachiko'], grand: ['Hiroshi', 'Keiko', 'Masao', 'Yoko'], parent: ['Takuya', 'Yuki', 'Daisuke', 'Mika'] },
+  IN: { greatgreat: ['Ramesh', 'Savitri', 'Gopal', 'Lakshmi'], great: ['Suresh', 'Kamala', 'Vijay', 'Sarita'], grand: ['Rajesh', 'Sunita', 'Anil', 'Geeta'], parent: ['Rahul', 'Priya', 'Amit', 'Neha'] },
+  BR: { greatgreat: ['João', 'Maria', 'José', 'Ana'], great: ['Antônio', 'Francisca', 'Francisco', 'Lúcia'], grand: ['Carlos', 'Márcia', 'Paulo', 'Sandra'], parent: ['Rodrigo', 'Fernanda', 'Bruno', 'Juliana'] },
+  MX: { greatgreat: ['José', 'María', 'Juan', 'Guadalupe'], great: ['Roberto', 'Rosa', 'Luis', 'Carmen'], grand: ['Carlos', 'Patricia', 'Jorge', 'Margarita'], parent: ['Alejandro', 'Adriana', 'Miguel', 'Claudia'] },
+  ZA: { greatgreat: ['Johannes', 'Susanna', 'Hendrik', 'Maria'], great: ['Petrus', 'Anna', 'Jacobus', 'Elizabeth'], grand: ['Johan', 'Magda', 'Pieter', 'Anette'], parent: ['Thabo', 'Lerato', 'Sipho', 'Nomvula'] },
+  NG: { greatgreat: ['Chukwu', 'Adaeze', 'Obinna', 'Ngozi'], great: ['Emeka', 'Chinwe', 'Nnamdi', 'Ifeoma'], grand: ['Chidi', 'Nneka', 'Uche', 'Amaka'], parent: ['Oluwaseun', 'Funke', 'Chinedu', 'Blessing'] },
+  KE: { greatgreat: ['Kamau', 'Wanjiku', 'Mwangi', 'Nyambura'], great: ['Njoroge', 'Wangari', 'Kariuki', 'Njeri'], grand: ['James', 'Mary', 'Peter', 'Grace'], parent: ['Brian', 'Faith', 'Kevin', 'Joy'] },
+  AE: { greatgreat: ['Mohammed', 'Fatima', 'Ahmed', 'Khadija'], great: ['Khalid', 'Maryam', 'Sultan', 'Aisha'], grand: ['Rashid', 'Noura', 'Hamad', 'Sara'], parent: ['Omar', 'Layla', 'Faisal', 'Dana'] },
+  SG: { greatgreat: ['Ah Kow', 'Ah Lian', 'Boon Huat', 'Siew Mei'], great: ['Cheng Hock', 'Mei Ling', 'Kok Wai', 'Soo Hoon'], grand: ['David', 'Jenny', 'Michael', 'Grace'], parent: ['Ryan', 'Rachel', 'Marcus', 'Nicole'] },
+  KR: { greatgreat: ['Sung-ho', 'Soon-ja', 'Dong-hyun', 'Young-hee'], great: ['Jung-ho', 'Mi-young', 'Seung-hoon', 'Eun-jung'], grand: ['Jae-won', 'Soo-yeon', 'Min-ho', 'Ji-young'], parent: ['Hyun-woo', 'Yuna', 'Jun-ho', 'Min-ji'] },
+  CN: { greatgreat: ['Guoqiang', 'Xiuying', 'Jianguo', 'Lanying'], great: ['Jianguo', 'Fang', 'Zhiqiang', 'Huifang'], grand: ['Wei', 'Hong', 'Jian', 'Yan'], parent: ['Hao', 'Xia', 'Chen', 'Li'] },
+  PH: { greatgreat: ['Jose', 'Maria', 'Pedro', 'Rosario'], great: ['Antonio', 'Corazon', 'Francisco', 'Remedios'], grand: ['Roberto', 'Esperanza', 'Eduardo', 'Gloria'], parent: ['Carlo', 'Anna', 'Miguel', 'Sofia'] },
+  NZ: { greatgreat: ['George', 'Edith', 'William', 'Mabel'], great: ['Donald', 'Shirley', 'Bruce', 'Jean'], grand: ['Murray', 'Judith', 'Ross', 'Christine'], parent: ['Jason', 'Rachel', 'Brendon', 'Nicole'] },
+  IE: { greatgreat: ['Patrick', 'Brigid', 'Michael', 'Mary'], great: ['Seamus', 'Kathleen', 'Brendan', 'Maureen'], grand: ['Declan', 'Siobhan', 'Liam', 'Aisling'], parent: ['Conor', 'Aoife', 'Sean', 'Ciara'] },
+};
 
-  const genNames = names[generation] || names.parent;
+// Generate ancestor based on historical context
+const generateAncestor = (generation, year, previousWealth = 0, countryCode = 'US') => {
+  const era = ECONOMIC_ERAS.find(e => year >= e.year && year < e.year + 10) || ECONOMIC_ERAS[0];
+  const countryNames = COUNTRY_ANCESTOR_NAMES[countryCode] || COUNTRY_ANCESTOR_NAMES.US;
+  const genNames = countryNames[generation] || countryNames.parent;
   const name = genNames[Math.floor(Math.random() * genNames.length)];
 
   // Calculate wealth based on era and decisions
@@ -288,7 +306,7 @@ const TreeConnector = () => (
 
 // Main Ancestor Mode Component
 const AncestorMode = () => {
-  const { simulation, currency } = useStore();
+  const { simulation, currency, userCountry } = useStore();
   const [expandedAncestor, setExpandedAncestor] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [ancestors, setAncestors] = useState(null);
@@ -300,25 +318,26 @@ const AncestorMode = () => {
   // Generate ancestors
   const generateAncestors = () => {
     setIsGenerating(true);
+    const countryCode = userCountry?.code || 'US';
 
     setTimeout(() => {
       const generatedAncestors = {};
       let previousWealth = 0;
 
       // Great-great grandparents (~1900)
-      generatedAncestors.greatgreat = generateAncestor('greatgreat', currentYear - 120, previousWealth);
+      generatedAncestors.greatgreat = generateAncestor('greatgreat', currentYear - 120, previousWealth, countryCode);
       previousWealth = generatedAncestors.greatgreat.passedDown;
 
       // Great grandparents (~1930)
-      generatedAncestors.great = generateAncestor('great', currentYear - 90, previousWealth);
+      generatedAncestors.great = generateAncestor('great', currentYear - 90, previousWealth, countryCode);
       previousWealth = generatedAncestors.great.passedDown;
 
       // Grandparents (~1960)
-      generatedAncestors.grand = generateAncestor('grand', currentYear - 60, previousWealth);
+      generatedAncestors.grand = generateAncestor('grand', currentYear - 60, previousWealth, countryCode);
       previousWealth = generatedAncestors.grand.passedDown;
 
       // Parents (~1990)
-      generatedAncestors.parent = generateAncestor('parent', currentYear - 30, previousWealth);
+      generatedAncestors.parent = generateAncestor('parent', currentYear - 30, previousWealth, countryCode);
 
       setAncestors(generatedAncestors);
       setIsGenerating(false);

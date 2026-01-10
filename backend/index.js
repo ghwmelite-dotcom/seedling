@@ -1127,24 +1127,64 @@ Built with love for first-generation wealth builders
 
     // ============== AI ENDPOINTS (Cloudflare Workers AI - Llama 3) ==============
 
+    // Country-specific context for localization
+    const getCountryContext = (countryCode, countryName) => {
+      const contexts = {
+        US: { currency: 'USD', currencySymbol: '$', taxSystem: '401k, IRA, Roth IRA', homeProgram: 'FHA loans', retirementAge: 67, culturalNote: 'American Dream of homeownership' },
+        GB: { currency: 'GBP', currencySymbol: '£', taxSystem: 'ISA, SIPP, pension schemes', homeProgram: 'Help to Buy', retirementAge: 66, culturalNote: 'British prudence and property ladder' },
+        CA: { currency: 'CAD', currencySymbol: 'C$', taxSystem: 'RRSP, TFSA', homeProgram: 'First-Time Home Buyer Incentive', retirementAge: 65, culturalNote: 'Canadian stability and multi-generational homes' },
+        AU: { currency: 'AUD', currencySymbol: 'A$', taxSystem: 'Superannuation', homeProgram: 'First Home Owner Grant', retirementAge: 67, culturalNote: 'Australian property investment culture' },
+        DE: { currency: 'EUR', currencySymbol: '€', taxSystem: 'Riester-Rente, betriebliche Altersvorsorge', homeProgram: 'KfW loans', retirementAge: 67, culturalNote: 'German long-term planning and renting culture' },
+        FR: { currency: 'EUR', currencySymbol: '€', taxSystem: 'PEA, assurance vie', homeProgram: 'PTZ (Prêt à Taux Zéro)', retirementAge: 64, culturalNote: 'French family wealth traditions' },
+        JP: { currency: 'JPY', currencySymbol: '¥', taxSystem: 'iDeCo, NISA', homeProgram: 'Flat 35', retirementAge: 65, culturalNote: 'Japanese multigenerational wealth transfer' },
+        IN: { currency: 'INR', currencySymbol: '₹', taxSystem: 'PPF, NPS, EPF', homeProgram: 'PMAY', retirementAge: 60, culturalNote: 'Indian joint family wealth building' },
+        BR: { currency: 'BRL', currencySymbol: 'R$', taxSystem: 'Previdência Privada', homeProgram: 'Minha Casa Minha Vida', retirementAge: 65, culturalNote: 'Brazilian family business traditions' },
+        MX: { currency: 'MXN', currencySymbol: 'MX$', taxSystem: 'Afore, PPR', homeProgram: 'Infonavit', retirementAge: 65, culturalNote: 'Mexican extended family support systems' },
+        ZA: { currency: 'ZAR', currencySymbol: 'R', taxSystem: 'Retirement Annuity, Tax-Free Savings', homeProgram: 'FLISP', retirementAge: 60, culturalNote: 'South African ubuntu philosophy of shared wealth' },
+        NG: { currency: 'NGN', currencySymbol: '₦', taxSystem: 'Pension Fund Administrators', homeProgram: 'NHF', retirementAge: 60, culturalNote: 'Nigerian community wealth building' },
+        KE: { currency: 'KES', currencySymbol: 'KSh', taxSystem: 'NSSF', homeProgram: 'Affordable Housing Programme', retirementAge: 60, culturalNote: 'Kenyan harambee collective savings' },
+        AE: { currency: 'AED', currencySymbol: 'د.إ', taxSystem: 'GPSSA, private savings', homeProgram: 'Sheikh Zayed Housing Programme', retirementAge: 60, culturalNote: 'Emirati investment in property and business' },
+        SG: { currency: 'SGD', currencySymbol: 'S$', taxSystem: 'CPF', homeProgram: 'HDB schemes', retirementAge: 63, culturalNote: 'Singaporean pragmatic wealth accumulation' },
+        KR: { currency: 'KRW', currencySymbol: '₩', taxSystem: 'National Pension, IRP', homeProgram: 'Jeonse system', retirementAge: 65, culturalNote: 'Korean education investment focus' },
+        CN: { currency: 'CNY', currencySymbol: '¥', taxSystem: 'Enterprise Annuity', homeProgram: 'Housing Provident Fund', retirementAge: 60, culturalNote: 'Chinese three-generation wealth planning' },
+        PH: { currency: 'PHP', currencySymbol: '₱', taxSystem: 'SSS, Pag-IBIG', homeProgram: 'Pag-IBIG Fund', retirementAge: 60, culturalNote: 'Filipino overseas worker remittances and family support' },
+        NZ: { currency: 'NZD', currencySymbol: 'NZ$', taxSystem: 'KiwiSaver', homeProgram: 'First Home Grant', retirementAge: 65, culturalNote: 'New Zealand property and lifestyle balance' },
+        IE: { currency: 'EUR', currencySymbol: '€', taxSystem: 'PRSA, company pensions', homeProgram: 'Help to Buy', retirementAge: 66, culturalNote: 'Irish property-focused wealth building' },
+      };
+      return contexts[countryCode] || contexts.US;
+    };
+
     // AI Chat endpoint for AI Coach
     if (path === "/api/ai/chat" && method === "POST") {
       try {
         const body = await request.json();
-        const { messages, context } = body;
+        const { messages, context, country } = body;
 
         if (!messages || !Array.isArray(messages)) {
           return jsonResponse({ error: "Messages array required" }, 400);
         }
 
+        // Get country-specific context
+        const countryCtx = getCountryContext(country?.code, country?.name);
+        const countryName = country?.name || 'your country';
+        const cityContext = country?.city ? ` based in ${country.city}` : '';
+
         // Build system prompt with financial advisor context
-        const systemPrompt = `You are an expert AI Financial Coach for Seedling, a generational wealth planning app. Your role is to provide personalized, actionable financial advice.
+        const systemPrompt = `You are an expert AI Financial Coach for Seedling, a generational wealth planning app. Your role is to provide personalized, actionable financial advice tailored to ${countryName}.
+
+IMPORTANT LOCALIZATION:
+- The user is from ${countryName}${cityContext}
+- Use ${countryCtx.currency} (${countryCtx.currencySymbol}) for all monetary amounts
+- Reference local tax-advantaged accounts: ${countryCtx.taxSystem}
+- Mention local home buying programs: ${countryCtx.homeProgram}
+- Local retirement age is typically ${countryCtx.retirementAge}
+- Cultural context: ${countryCtx.culturalNote}
 
 Key principles:
 - Focus on long-term, generational wealth building
 - Emphasize compound growth and the power of small habits
 - Be encouraging but realistic about financial outcomes
-- Use specific numbers and examples when possible
+- Use specific numbers in ${countryCtx.currencySymbol} with examples
 - Reference how decisions impact future generations
 - Keep responses concise but informative (2-3 paragraphs max)
 
@@ -1173,36 +1213,77 @@ Respond in a friendly, professional tone. Use markdown formatting for emphasis a
       }
     }
 
+    // Country-specific names for story generation
+    const getCountryNames = (countryCode) => {
+      const namesByCountry = {
+        US: { male: ['James', 'Michael', 'William', 'David', 'Robert', 'Christopher', 'Matthew', 'Anthony', 'Daniel', 'Joshua'], female: ['Emma', 'Olivia', 'Sophia', 'Isabella', 'Mia', 'Charlotte', 'Amelia', 'Harper', 'Evelyn', 'Abigail'], cities: ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Seattle', 'Denver', 'Austin', 'Miami', 'Boston'] },
+        GB: { male: ['Oliver', 'George', 'Harry', 'Jack', 'Charlie', 'Thomas', 'Henry', 'William', 'James', 'Alfie'], female: ['Olivia', 'Amelia', 'Isla', 'Ava', 'Emily', 'Isabella', 'Mia', 'Poppy', 'Ella', 'Lily'], cities: ['London', 'Manchester', 'Birmingham', 'Edinburgh', 'Glasgow', 'Liverpool', 'Bristol', 'Leeds', 'Sheffield', 'Oxford'] },
+        CA: { male: ['Liam', 'Noah', 'Oliver', 'Lucas', 'Ethan', 'Benjamin', 'William', 'James', 'Henry', 'Alexander'], female: ['Olivia', 'Emma', 'Charlotte', 'Amelia', 'Ava', 'Sophia', 'Mia', 'Isla', 'Evelyn', 'Luna'], cities: ['Toronto', 'Vancouver', 'Montreal', 'Calgary', 'Ottawa', 'Edmonton', 'Winnipeg', 'Quebec City', 'Halifax', 'Victoria'] },
+        AU: { male: ['Oliver', 'William', 'Jack', 'Noah', 'Thomas', 'James', 'Henry', 'Charlie', 'Lucas', 'Liam'], female: ['Olivia', 'Charlotte', 'Amelia', 'Isla', 'Mia', 'Ava', 'Grace', 'Willow', 'Harper', 'Chloe'], cities: ['Sydney', 'Melbourne', 'Brisbane', 'Perth', 'Adelaide', 'Gold Coast', 'Canberra', 'Newcastle', 'Hobart', 'Darwin'] },
+        DE: { male: ['Felix', 'Paul', 'Leon', 'Maximilian', 'Elias', 'Noah', 'Ben', 'Lukas', 'Jonas', 'Finn'], female: ['Emma', 'Mia', 'Hannah', 'Sophia', 'Emilia', 'Marie', 'Lena', 'Anna', 'Lea', 'Lina'], cities: ['Berlin', 'Munich', 'Hamburg', 'Frankfurt', 'Cologne', 'Stuttgart', 'Düsseldorf', 'Leipzig', 'Dresden', 'Nuremberg'] },
+        FR: { male: ['Gabriel', 'Léo', 'Raphaël', 'Louis', 'Lucas', 'Adam', 'Arthur', 'Hugo', 'Jules', 'Maël'], female: ['Emma', 'Jade', 'Louise', 'Alice', 'Chloé', 'Léa', 'Manon', 'Rose', 'Anna', 'Juliette'], cities: ['Paris', 'Lyon', 'Marseille', 'Toulouse', 'Nice', 'Nantes', 'Bordeaux', 'Strasbourg', 'Lille', 'Montpellier'] },
+        JP: { male: ['Haruto', 'Yuto', 'Sota', 'Yuki', 'Hayato', 'Haruki', 'Ren', 'Kaito', 'Asahi', 'Minato'], female: ['Himari', 'Hina', 'Yua', 'Sakura', 'Ichika', 'Akari', 'Sara', 'Yui', 'Rin', 'Mei'], cities: ['Tokyo', 'Osaka', 'Kyoto', 'Yokohama', 'Nagoya', 'Fukuoka', 'Sapporo', 'Kobe', 'Sendai', 'Hiroshima'] },
+        IN: { male: ['Aarav', 'Vivaan', 'Aditya', 'Vihaan', 'Arjun', 'Reyansh', 'Ayaan', 'Krishna', 'Ishaan', 'Shaurya'], female: ['Aadhya', 'Ananya', 'Diya', 'Pari', 'Saanvi', 'Aanya', 'Kiara', 'Myra', 'Sara', 'Ira'], cities: ['Mumbai', 'Delhi', 'Bangalore', 'Chennai', 'Hyderabad', 'Kolkata', 'Pune', 'Ahmedabad', 'Jaipur', 'Lucknow'] },
+        BR: { male: ['Miguel', 'Arthur', 'Heitor', 'Bernardo', 'Davi', 'Gabriel', 'Pedro', 'Lucas', 'Matheus', 'Rafael'], female: ['Helena', 'Alice', 'Laura', 'Valentina', 'Sophia', 'Isabella', 'Manuela', 'Julia', 'Heloísa', 'Luísa'], cities: ['São Paulo', 'Rio de Janeiro', 'Brasília', 'Salvador', 'Fortaleza', 'Belo Horizonte', 'Curitiba', 'Recife', 'Porto Alegre', 'Florianópolis'] },
+        MX: { male: ['Santiago', 'Mateo', 'Sebastián', 'Leonardo', 'Matías', 'Emiliano', 'Diego', 'Daniel', 'Miguel', 'Alejandro'], female: ['Sofía', 'Valentina', 'Regina', 'Camila', 'María', 'Fernanda', 'Isabella', 'Ximena', 'Victoria', 'Renata'], cities: ['Mexico City', 'Guadalajara', 'Monterrey', 'Cancún', 'Puebla', 'Tijuana', 'Mérida', 'Querétaro', 'Oaxaca', 'San Miguel de Allende'] },
+        ZA: { male: ['Liam', 'Junior', 'Blessing', 'Bandile', 'Jayden', 'Aiden', 'Ethan', 'Lwazi', 'Thabo', 'Sipho'], female: ['Amahle', 'Enzokuhle', 'Rethabile', 'Bokamoso', 'Amogelang', 'Naledi', 'Lerato', 'Thando', 'Jade', 'Emma'], cities: ['Johannesburg', 'Cape Town', 'Durban', 'Pretoria', 'Port Elizabeth', 'Bloemfontein', 'East London', 'Stellenbosch', 'Sandton', 'Soweto'] },
+        NG: { male: ['Chukwuemeka', 'Oluwaseun', 'Adebayo', 'Chidera', 'Olumide', 'Ifeanyi', 'Ayomide', 'Ebuka', 'Tunde', 'Chinedu'], female: ['Adaeze', 'Chiamaka', 'Oluwakemi', 'Ngozi', 'Ifeoma', 'Amara', 'Chisom', 'Nneka', 'Blessing', 'Funke'], cities: ['Lagos', 'Abuja', 'Kano', 'Ibadan', 'Port Harcourt', 'Benin City', 'Kaduna', 'Enugu', 'Calabar', 'Owerri'] },
+        KE: { male: ['Brian', 'Kevin', 'Ian', 'Victor', 'Dennis', 'Collins', 'Peter', 'James', 'John', 'Samuel'], female: ['Faith', 'Grace', 'Mercy', 'Joy', 'Hope', 'Wanjiku', 'Akinyi', 'Njeri', 'Nancy', 'Mary'], cities: ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Eldoret', 'Thika', 'Malindi', 'Nyeri', 'Machakos', 'Kitale'] },
+        AE: { male: ['Mohammed', 'Ahmed', 'Ali', 'Omar', 'Khalid', 'Rashid', 'Saeed', 'Hamad', 'Sultan', 'Faisal'], female: ['Fatima', 'Mariam', 'Sara', 'Aisha', 'Maryam', 'Layla', 'Hind', 'Noura', 'Dana', 'Reem'], cities: ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Ras Al Khaimah', 'Fujairah', 'Al Ain', 'Umm Al Quwain', 'Palm Jumeirah', 'Dubai Marina'] },
+        SG: { male: ['Ryan', 'Lucas', 'Ethan', 'Jayden', 'Ian', 'Marcus', 'Darren', 'Nicholas', 'Brandon', 'Javier'], female: ['Emma', 'Chloe', 'Sophie', 'Charlotte', 'Olivia', 'Rachel', 'Sarah', 'Hannah', 'Ashley', 'Nicole'], cities: ['Singapore', 'Orchard', 'Marina Bay', 'Sentosa', 'Changi', 'Jurong', 'Tampines', 'Bedok', 'Woodlands', 'Bukit Timah'] },
+        KR: { male: ['Minjun', 'Seo-jun', 'Do-yun', 'Ye-jun', 'Si-woo', 'Ha-jun', 'Jun-seo', 'Ji-ho', 'Joon', 'Tae-hyun'], female: ['Seo-yeon', 'Ji-woo', 'Seo-yoon', 'Ha-yoon', 'Min-seo', 'Ha-rin', 'Yuna', 'Ji-yoo', 'Su-ah', 'Ye-eun'], cities: ['Seoul', 'Busan', 'Incheon', 'Daegu', 'Daejeon', 'Gwangju', 'Suwon', 'Ulsan', 'Jeju', 'Gyeongju'] },
+        CN: { male: ['Wei', 'Jian', 'Ming', 'Chen', 'Jun', 'Lei', 'Yang', 'Hao', 'Feng', 'Long'], female: ['Li', 'Fang', 'Mei', 'Xia', 'Yan', 'Juan', 'Lan', 'Ying', 'Hong', 'Xiu'], cities: ['Shanghai', 'Beijing', 'Shenzhen', 'Guangzhou', 'Hangzhou', 'Chengdu', 'Nanjing', 'Wuhan', 'Suzhou', 'Tianjin'] },
+        PH: { male: ['John', 'Mark', 'James', 'Miguel', 'Gabriel', 'Francis', 'Joshua', 'Daniel', 'Carlo', 'Rafael'], female: ['Maria', 'Anna', 'Sofia', 'Angela', 'Isabelle', 'Gabrielle', 'Nicole', 'Althea', 'Jasmine', 'Patricia'], cities: ['Manila', 'Cebu City', 'Davao', 'Quezon City', 'Makati', 'Taguig', 'Pasig', 'Baguio', 'Iloilo City', 'Cagayan de Oro'] },
+        NZ: { male: ['Oliver', 'Jack', 'Noah', 'William', 'Leo', 'George', 'Charlie', 'Lucas', 'James', 'Henry'], female: ['Olivia', 'Charlotte', 'Isla', 'Amelia', 'Ava', 'Mia', 'Willow', 'Harper', 'Grace', 'Sophie'], cities: ['Auckland', 'Wellington', 'Christchurch', 'Hamilton', 'Tauranga', 'Dunedin', 'Queenstown', 'Rotorua', 'Napier', 'Nelson'] },
+        IE: { male: ['Jack', 'James', 'Noah', 'Conor', 'Daniel', 'Liam', 'Fionn', 'Luke', 'Sean', 'Adam'], female: ['Emily', 'Grace', 'Sophie', 'Emma', 'Amelia', 'Ava', 'Mia', 'Ella', 'Lucy', 'Aoife'], cities: ['Dublin', 'Cork', 'Galway', 'Limerick', 'Waterford', 'Kilkenny', 'Drogheda', 'Dundalk', 'Sligo', 'Athlone'] },
+      };
+      return namesByCountry[countryCode] || namesByCountry.US;
+    };
+
     // AI Story Generation for Family Chronicles
     if (path === "/api/ai/story" && method === "POST") {
       try {
         const body = await request.json();
-        const { member, generation, scenario, tone } = body;
+        const { member, generation, scenario, tone, country } = body;
+
+        // Get country-specific context
+        const countryCtx = getCountryContext(country?.code, country?.name);
+        const countryNames = getCountryNames(country?.code);
+        const countryName = country?.name || 'the country';
+        const suggestedCity = countryNames.cities[Math.floor(Math.random() * countryNames.cities.length)];
 
         const prompt = `Write a compelling, emotional family story about a descendant in a generational wealth simulation.
 
+IMPORTANT: This story is set in ${countryName}. Use culturally appropriate:
+- Names: Choose from ${countryNames.male.slice(0, 5).join(', ')} (male) or ${countryNames.female.slice(0, 5).join(', ')} (female)
+- Locations: Set in cities like ${countryNames.cities.slice(0, 5).join(', ')}
+- Currency: ${countryCtx.currencySymbol} (${countryCtx.currency})
+- Cultural context: ${countryCtx.culturalNote}
+- Financial systems: ${countryCtx.taxSystem}
+
 Character Details:
-- Name: ${member?.name || 'Alex'}
+- Name: ${member?.name || 'the protagonist'} (or generate a culturally appropriate name)
 - Generation: ${generation || 1} (${generation === 0 ? 'founder' : `${generation} generation${generation > 1 ? 's' : ''} later`})
 - Age: ${member?.age || 35}
-- Net Worth: $${(member?.netWorth || 50000).toLocaleString()}
+- Net Worth: ${countryCtx.currencySymbol}${(member?.netWorth || 50000).toLocaleString()}
 - Financial Health: ${member?.financialHealth || 'stable'}
 - Owns Home: ${member?.ownsHome ? 'Yes' : 'No'}
-- Education: ${member?.education || 'bachelors'}
+- Education: ${member?.education || 'university degree'}
+- Location: ${suggestedCity}, ${countryName}
 
 Scenario: ${scenario || 'Building wealth through disciplined saving'}
 Tone: ${tone || 'hopeful and inspiring'}
 
 Write a 2-3 paragraph narrative story about this person's life, focusing on:
-1. How their financial decisions shaped their life
+1. How their financial decisions shaped their life in ${countryName}
 2. The legacy they're building for future generations
-3. Specific moments that defined their wealth journey
+3. Specific moments that defined their wealth journey, referencing local landmarks or cultural events
 
-Make it personal, emotional, and inspiring. Use vivid details.`;
+Make it personal, emotional, and inspiring. Use vivid details specific to ${countryName}.`;
 
         const response = await env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
           messages: [
-            { role: "system", content: "You are a creative writer specializing in compelling family narratives about wealth building and generational legacy. Write emotionally resonant stories that inspire readers to think about their own financial legacy." },
+            { role: "system", content: `You are a creative writer specializing in compelling family narratives about wealth building and generational legacy. You write stories set in ${countryName} with culturally authentic names, places, and financial contexts. Write emotionally resonant stories that inspire readers to think about their own financial legacy.` },
             { role: "user", content: prompt }
           ],
           max_tokens: 1024,
@@ -1224,30 +1305,41 @@ Make it personal, emotional, and inspiring. Use vivid details.`;
     if (path === "/api/ai/predict-events" && method === "POST") {
       try {
         const body = await request.json();
-        const { age, income, netWorth, hasHome, education, existingEvents } = body;
+        const { age, income, netWorth, hasHome, education, existingEvents, country } = body;
 
-        const prompt = `Based on this financial profile, predict the 5 most likely major life expenses in the next 20 years:
+        // Get country-specific context
+        const countryCtx = getCountryContext(country?.code, country?.name);
+        const countryName = country?.name || 'the country';
+
+        const prompt = `Based on this financial profile for someone in ${countryName}, predict the 5 most likely major life expenses in the next 20 years:
+
+IMPORTANT: Tailor predictions to ${countryName}:
+- Use ${countryCtx.currency} (${countryCtx.currencySymbol}) for all costs
+- Consider local costs of living and cultural norms
+- Reference local programs like ${countryCtx.homeProgram}
+- Cultural context: ${countryCtx.culturalNote}
 
 Profile:
 - Current Age: ${age || 30}
-- Annual Income: $${(income || 75000).toLocaleString()}
-- Net Worth: $${(netWorth || 50000).toLocaleString()}
+- Annual Income: ${countryCtx.currencySymbol}${(income || 75000).toLocaleString()}
+- Net Worth: ${countryCtx.currencySymbol}${(netWorth || 50000).toLocaleString()}
 - Homeowner: ${hasHome ? 'Yes' : 'No'}
 - Education: ${education || 'bachelors'}
+- Location: ${countryName}
 ${existingEvents ? `- Already planned: ${existingEvents.join(', ')}` : ''}
 
 For each predicted event, provide:
-1. Event name
+1. Event name (culturally appropriate for ${countryName})
 2. Estimated age when it occurs
-3. Estimated cost
+3. Estimated cost in ${countryCtx.currency} (as a number, not formatted)
 4. Probability (high/medium/low)
-5. Brief reasoning
+5. Brief reasoning specific to ${countryName}
 
 Format as JSON array: [{"event": "...", "age": 35, "cost": 50000, "probability": "high", "reason": "..."}]`;
 
         const response = await env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
           messages: [
-            { role: "system", content: "You are a financial planning AI that predicts major life expenses. Always respond with valid JSON only, no markdown formatting." },
+            { role: "system", content: `You are a financial planning AI that predicts major life expenses for people in ${countryName}. Consider local costs, cultural norms, and financial systems. Always respond with valid JSON only, no markdown formatting.` },
             { role: "user", content: prompt }
           ],
           max_tokens: 1024,
@@ -1280,26 +1372,40 @@ Format as JSON array: [{"event": "...", "age": 35, "cost": 50000, "probability":
     if (path === "/api/ai/ancestor-story" && method === "POST") {
       try {
         const body = await request.json();
-        const { ancestor, era, decisions, outcome } = body;
+        const { ancestor, era, decisions, outcome, country } = body;
 
-        const prompt = `Write a historical narrative about an ancestor's financial journey:
+        // Get country-specific context
+        const countryCtx = getCountryContext(country?.code, country?.name);
+        const countryNames = getCountryNames(country?.code);
+        const countryName = country?.name || 'the country';
+        const suggestedName = countryNames.male[Math.floor(Math.random() * 5)] || ancestor?.name;
 
-Ancestor: ${ancestor?.name || 'Great-Grandparent'}
-Era: ${era || '1950s America'}
+        const prompt = `Write a historical narrative about an ancestor's financial journey in ${countryName}:
+
+IMPORTANT: Set this story in ${countryName} with culturally authentic details:
+- Use names like ${countryNames.male.slice(0, 3).join(', ')} or ${countryNames.female.slice(0, 3).join(', ')}
+- Reference cities like ${countryNames.cities.slice(0, 3).join(', ')}
+- Use ${countryCtx.currencySymbol} for any monetary amounts
+- Cultural context: ${countryCtx.culturalNote}
+
+Ancestor: ${ancestor?.name || suggestedName}
+Era: ${era || '1950s'}
+Location: ${countryName}
 Key Financial Decisions: ${decisions?.join(', ') || 'saved diligently, bought property'}
 Financial Outcome: ${outcome || 'Built modest wealth for next generation'}
 
 Write a 2-paragraph story in a historical, reflective tone. Include:
-- The economic context of their era
-- Specific challenges they overcame
+- The economic context of ${countryName} during that era
+- Specific challenges they overcame as someone living in ${countryName}
 - How their decisions impacted future generations
-- A memorable quote or philosophy they lived by
+- A memorable quote or philosophy they lived by (culturally appropriate)
+- Reference to local landmarks, events, or traditions
 
-Make it feel like a family history being passed down.`;
+Make it feel like a family history being passed down through generations in ${countryName}.`;
 
         const response = await env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
           messages: [
-            { role: "system", content: "You are a family historian writing compelling narratives about ancestors and their financial legacy. Write with warmth, respect, and historical accuracy." },
+            { role: "system", content: `You are a family historian writing compelling narratives about ancestors in ${countryName} and their financial legacy. Write with warmth, respect, historical accuracy, and cultural authenticity for ${countryName}.` },
             { role: "user", content: prompt }
           ],
           max_tokens: 768,

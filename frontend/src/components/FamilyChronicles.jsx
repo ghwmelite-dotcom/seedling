@@ -344,7 +344,7 @@ const CharacterPortrait = ({ chronicle, isSelected }) => {
 
 // Main Family Chronicles component
 const FamilyChronicles = () => {
-  const { simulation, currency } = useStore();
+  const { simulation, currency, userCountry } = useStore();
   const [chronicles, setChronicles] = useState([]);
   const [selectedChronicle, setSelectedChronicle] = useState(null);
   const [activeStoryIndex, setActiveStoryIndex] = useState(0);
@@ -373,6 +373,7 @@ const FamilyChronicles = () => {
           generation,
           scenario: 'Building generational wealth through disciplined saving and smart investing',
           tone: member.financialHealth === 'thriving' ? 'triumphant and inspiring' : 'hopeful and determined',
+          country: userCountry,
         })
       });
 
