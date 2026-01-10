@@ -211,7 +211,7 @@ function AppContent() {
         return <VoiceControl simulation={result} onSimulationUpdate={handleVoiceSimulation} />;
 
       case 'collaborate':
-        return <CollaborativePlanning simulation={result} />;
+        return <CollaborativePlanning simulation={result} onSimulationUpdate={handleVoiceSimulation} />;
 
       case 'capsule':
         return <TimeCapsule simulation={result} />;
@@ -220,10 +220,31 @@ function AppContent() {
         return <WealthSoundscapes simulation={result} />;
 
       case 'oracle':
-        return <LifeEventOracle simulation={result} />;
+        return <LifeEventOracle simulation={result} onAddToSimulation={(event) => {
+          // Add life event to simulation by updating form and running
+          const currentParams = {
+            startingAge: result?.scenario?.tree?.currentAge || 30,
+            startingNetWorth: Math.max(0, (result?.scenario?.tree?.netWorth || 50000) - event.cost),
+            annualIncome: result?.scenario?.tree?.income || 75000,
+            savingsRate: 20,
+            monthlyHabitChange: 200,
+            generations: 4,
+          };
+          handleVoiceSimulation(currentParams);
+        }} />;
 
       case 'bank':
-        return <BankIntegration simulation={result} />;
+        return <BankIntegration simulation={result} onNetWorthUpdate={(realNetWorth) => {
+          // Update simulation with real net worth from bank
+          handleSimulation({
+            startingAge: 30,
+            startingNetWorth: realNetWorth,
+            annualIncome: 75000,
+            savingsRate: 20,
+            monthlyHabitChange: 200,
+            generations: 4,
+          });
+        }} />;
 
       case 'ancestors':
         return <AncestorMode simulation={result} />;
