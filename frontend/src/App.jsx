@@ -32,7 +32,6 @@ import {
   TimeCapsule,
   WealthSoundscapes,
   LifeEventOracle,
-  BankIntegration,
   AncestorMode,
   NFTCertificates,
 } from './components';
@@ -241,22 +240,6 @@ function AppContent() {
           handleVoiceSimulation(currentParams);
         }} />;
 
-      case 'bank':
-        return <BankIntegration simulation={result} onNetWorthUpdate={(realNetWorth) => {
-          // Update simulation with real net worth from bank and navigate to results
-          handleVoiceSimulation({
-            name: 'You',
-            age: result?.scenario?.tree?.currentAge || 30,
-            income: result?.scenario?.tree?.income || 75000,
-            savings: realNetWorth,
-            debt: 0,
-            education: 'bachelors',
-            financial_literacy: 0.5,
-            monthlyHabitChange: 200,
-            generations: 4,
-          });
-        }} />;
-
       case 'ancestors':
         return <AncestorMode simulation={result} />;
 
@@ -335,7 +318,6 @@ function AppContent() {
                   {activePanel === 'capsule' && 'Send messages to future generations'}
                   {activePanel === 'soundscapes' && 'Experience your wealth as music'}
                   {activePanel === 'oracle' && 'Predict major life expenses'}
-                  {activePanel === 'bank' && 'Connect your bank accounts'}
                   {activePanel === 'ancestors' && 'See how your ancestors built wealth'}
                   {activePanel === 'nft' && 'Mint your achievements as NFTs'}
                   {activePanel === 'settings' && 'Customize your experience'}

@@ -46,7 +46,6 @@ const navCategories = [
     category: 'Connect & Share',
     description: 'Export & integrate',
     items: [
-      { id: 'bank', label: 'Bank Sync', icon: '🏦', description: 'Connect accounts' },
       { id: 'report', label: 'PDF Report', icon: '📄', description: 'Generate report' },
       { id: 'nft', label: 'NFT Certs', icon: '🎖️', description: 'Mint achievements' },
     ],

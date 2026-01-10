@@ -38,6 +38,5 @@ export { default as CollaborativePlanning } from './CollaborativePlanning';
 export { default as TimeCapsule } from './TimeCapsule';
 export { default as WealthSoundscapes } from './WealthSoundscapes';
 export { default as LifeEventOracle } from './LifeEventOracle';
-export { default as BankIntegration } from './BankIntegration';
 export { default as AncestorMode } from './AncestorMode';
 export { default as NFTCertificates } from './NFTCertificates';
