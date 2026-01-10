@@ -3,18 +3,77 @@ import { motion, AnimatePresence } from 'framer-motion';
 import useStore from '../store/useStore';
 import { formatCurrency } from '../utils/format';
 
-// Simulated bank institutions
+// Simulated bank institutions organized by region
 const BANKS = [
-  { id: 'chase', name: 'Chase', logo: '🏦', color: 'from-blue-600 to-blue-800' },
-  { id: 'bofa', name: 'Bank of America', logo: '🏛️', color: 'from-red-600 to-red-800' },
-  { id: 'wells', name: 'Wells Fargo', logo: '🐴', color: 'from-yellow-600 to-red-700' },
-  { id: 'citi', name: 'Citibank', logo: '🌐', color: 'from-blue-500 to-cyan-600' },
-  { id: 'usbank', name: 'US Bank', logo: '🇺🇸', color: 'from-purple-600 to-purple-800' },
-  { id: 'capital', name: 'Capital One', logo: '💳', color: 'from-red-500 to-orange-600' },
-  { id: 'schwab', name: 'Charles Schwab', logo: '📈', color: 'from-cyan-500 to-blue-600' },
-  { id: 'fidelity', name: 'Fidelity', logo: '🎯', color: 'from-green-600 to-emerald-700' },
-  { id: 'vanguard', name: 'Vanguard', logo: '⛵', color: 'from-red-700 to-red-900' },
-  { id: 'amex', name: 'American Express', logo: '💎', color: 'from-blue-400 to-blue-600' },
+  // 🇺🇸 United States (USD)
+  { id: 'chase', name: 'Chase', logo: '🏦', color: 'from-blue-600 to-blue-800', region: 'US', flag: '🇺🇸' },
+  { id: 'bofa', name: 'Bank of America', logo: '🏛️', color: 'from-red-600 to-red-800', region: 'US', flag: '🇺🇸' },
+  { id: 'wells', name: 'Wells Fargo', logo: '🐴', color: 'from-yellow-600 to-red-700', region: 'US', flag: '🇺🇸' },
+  { id: 'citi', name: 'Citibank', logo: '🌐', color: 'from-blue-500 to-cyan-600', region: 'US', flag: '🇺🇸' },
+  { id: 'capital', name: 'Capital One', logo: '💳', color: 'from-red-500 to-orange-600', region: 'US', flag: '🇺🇸' },
+
+  // 🇬🇧 United Kingdom (GBP)
+  { id: 'hsbc', name: 'HSBC UK', logo: '🔴', color: 'from-red-600 to-red-800', region: 'UK', flag: '🇬🇧' },
+  { id: 'barclays', name: 'Barclays', logo: '🦅', color: 'from-cyan-500 to-blue-600', region: 'UK', flag: '🇬🇧' },
+  { id: 'lloyds', name: 'Lloyds Bank', logo: '🐴', color: 'from-green-600 to-green-800', region: 'UK', flag: '🇬🇧' },
+  { id: 'natwest', name: 'NatWest', logo: '🟣', color: 'from-purple-600 to-purple-800', region: 'UK', flag: '🇬🇧' },
+  { id: 'monzo', name: 'Monzo', logo: '🧡', color: 'from-orange-500 to-pink-600', region: 'UK', flag: '🇬🇧' },
+
+  // 🇪🇺 Europe (EUR)
+  { id: 'deutschebank', name: 'Deutsche Bank', logo: '🔷', color: 'from-blue-700 to-blue-900', region: 'EU', flag: '🇪🇺' },
+  { id: 'bnp', name: 'BNP Paribas', logo: '🌿', color: 'from-green-600 to-teal-700', region: 'EU', flag: '🇪🇺' },
+  { id: 'ing', name: 'ING Bank', logo: '🦁', color: 'from-orange-500 to-orange-700', region: 'EU', flag: '🇪🇺' },
+  { id: 'santander', name: 'Santander', logo: '🔥', color: 'from-red-500 to-red-700', region: 'EU', flag: '🇪🇺' },
+  { id: 'n26', name: 'N26', logo: '💚', color: 'from-teal-500 to-cyan-600', region: 'EU', flag: '🇪🇺' },
+
+  // 🇨🇦 Canada (CAD)
+  { id: 'rbc', name: 'RBC Royal Bank', logo: '🦁', color: 'from-blue-600 to-blue-800', region: 'CA', flag: '🇨🇦' },
+  { id: 'td', name: 'TD Canada Trust', logo: '💚', color: 'from-green-600 to-green-800', region: 'CA', flag: '🇨🇦' },
+  { id: 'scotiabank', name: 'Scotiabank', logo: '🔴', color: 'from-red-600 to-red-800', region: 'CA', flag: '🇨🇦' },
+  { id: 'bmo', name: 'BMO', logo: '🔵', color: 'from-blue-500 to-indigo-600', region: 'CA', flag: '🇨🇦' },
+  { id: 'cibc', name: 'CIBC', logo: '🟡', color: 'from-red-600 to-yellow-600', region: 'CA', flag: '🇨🇦' },
+
+  // 🇦🇺 Australia (AUD)
+  { id: 'commbank', name: 'CommBank', logo: '🟡', color: 'from-yellow-500 to-yellow-700', region: 'AU', flag: '🇦🇺' },
+  { id: 'westpac', name: 'Westpac', logo: '🔴', color: 'from-red-600 to-red-800', region: 'AU', flag: '🇦🇺' },
+  { id: 'anz', name: 'ANZ Bank', logo: '🔵', color: 'from-blue-600 to-blue-800', region: 'AU', flag: '🇦🇺' },
+  { id: 'nab', name: 'NAB', logo: '🔴', color: 'from-red-700 to-red-900', region: 'AU', flag: '🇦🇺' },
+  { id: 'upbank', name: 'Up Bank', logo: '🧡', color: 'from-orange-400 to-pink-500', region: 'AU', flag: '🇦🇺' },
+
+  // 🇮🇳 India (INR)
+  { id: 'sbi', name: 'State Bank of India', logo: '🔵', color: 'from-blue-600 to-blue-800', region: 'IN', flag: '🇮🇳' },
+  { id: 'hdfc', name: 'HDFC Bank', logo: '🔵', color: 'from-blue-700 to-indigo-800', region: 'IN', flag: '🇮🇳' },
+  { id: 'icici', name: 'ICICI Bank', logo: '🟠', color: 'from-orange-500 to-red-600', region: 'IN', flag: '🇮🇳' },
+  { id: 'axis', name: 'Axis Bank', logo: '🟣', color: 'from-purple-600 to-pink-700', region: 'IN', flag: '🇮🇳' },
+  { id: 'kotak', name: 'Kotak Mahindra', logo: '🔴', color: 'from-red-600 to-red-800', region: 'IN', flag: '🇮🇳' },
+
+  // 🇳🇬 Nigeria (NGN)
+  { id: 'gtbank', name: 'GTBank', logo: '🟠', color: 'from-orange-500 to-orange-700', region: 'NG', flag: '🇳🇬' },
+  { id: 'zenith', name: 'Zenith Bank', logo: '🔴', color: 'from-red-600 to-red-800', region: 'NG', flag: '🇳🇬' },
+  { id: 'firstbank', name: 'First Bank', logo: '🔵', color: 'from-blue-600 to-blue-800', region: 'NG', flag: '🇳🇬' },
+  { id: 'accessbank', name: 'Access Bank', logo: '🟠', color: 'from-orange-600 to-red-700', region: 'NG', flag: '🇳🇬' },
+  { id: 'uba', name: 'UBA', logo: '🔴', color: 'from-red-700 to-red-900', region: 'NG', flag: '🇳🇬' },
+
+  // 🇬🇭 Ghana (GHS)
+  { id: 'gcb', name: 'GCB Bank', logo: '🟢', color: 'from-green-600 to-green-800', region: 'GH', flag: '🇬🇭' },
+  { id: 'ecobank', name: 'Ecobank Ghana', logo: '🔵', color: 'from-blue-500 to-cyan-600', region: 'GH', flag: '🇬🇭' },
+  { id: 'absa', name: 'Absa Ghana', logo: '🔴', color: 'from-red-600 to-red-800', region: 'GH', flag: '🇬🇭' },
+  { id: 'stanbic', name: 'Stanbic Bank', logo: '🔵', color: 'from-blue-600 to-blue-800', region: 'GH', flag: '🇬🇭' },
+  { id: 'calbank', name: 'CalBank', logo: '🟢', color: 'from-green-500 to-teal-600', region: 'GH', flag: '🇬🇭' },
+
+  // 🇿🇦 South Africa (ZAR)
+  { id: 'fnb', name: 'FNB', logo: '🟠', color: 'from-orange-500 to-orange-700', region: 'ZA', flag: '🇿🇦' },
+  { id: 'standardbank', name: 'Standard Bank', logo: '🔵', color: 'from-blue-600 to-blue-800', region: 'ZA', flag: '🇿🇦' },
+  { id: 'nedbank', name: 'Nedbank', logo: '🟢', color: 'from-green-600 to-green-800', region: 'ZA', flag: '🇿🇦' },
+  { id: 'capitec', name: 'Capitec', logo: '🔵', color: 'from-blue-500 to-indigo-600', region: 'ZA', flag: '🇿🇦' },
+  { id: 'absaza', name: 'Absa', logo: '🔴', color: 'from-red-600 to-red-800', region: 'ZA', flag: '🇿🇦' },
+
+  // 🇰🇪 Kenya (KES)
+  { id: 'kcb', name: 'KCB Bank', logo: '🟢', color: 'from-green-600 to-green-800', region: 'KE', flag: '🇰🇪' },
+  { id: 'equity', name: 'Equity Bank', logo: '🟠', color: 'from-orange-500 to-red-600', region: 'KE', flag: '🇰🇪' },
+  { id: 'coop', name: 'Co-operative Bank', logo: '🟢', color: 'from-green-500 to-teal-600', region: 'KE', flag: '🇰🇪' },
+  { id: 'stanchart', name: 'Standard Chartered', logo: '🔵', color: 'from-blue-500 to-cyan-600', region: 'KE', flag: '🇰🇪' },
+  { id: 'absakena', name: 'Absa Kenya', logo: '🔴', color: 'from-red-600 to-red-800', region: 'KE', flag: '🇰🇪' },
 ];
 
 // Simulated account types
@@ -60,14 +119,39 @@ const generateAccounts = (bank) => {
   ];
 };
 
+// Region labels for filtering
+const REGIONS = [
+  { id: 'all', name: 'All Banks', flag: '🌍' },
+  { id: 'US', name: 'United States', flag: '🇺🇸' },
+  { id: 'UK', name: 'United Kingdom', flag: '🇬🇧' },
+  { id: 'EU', name: 'Europe', flag: '🇪🇺' },
+  { id: 'CA', name: 'Canada', flag: '🇨🇦' },
+  { id: 'AU', name: 'Australia', flag: '🇦🇺' },
+  { id: 'IN', name: 'India', flag: '🇮🇳' },
+  { id: 'NG', name: 'Nigeria', flag: '🇳🇬' },
+  { id: 'GH', name: 'Ghana', flag: '🇬🇭' },
+  { id: 'ZA', name: 'South Africa', flag: '🇿🇦' },
+  { id: 'KE', name: 'Kenya', flag: '🇰🇪' },
+];
+
 // Bank selection modal
 const BankSelectionModal = ({ isOpen, onClose, onSelect, connectedBanks }) => {
   const [search, setSearch] = useState('');
+  const [selectedRegion, setSelectedRegion] = useState('all');
 
   const filteredBanks = BANKS.filter(
     bank => !connectedBanks.includes(bank.id) &&
-    bank.name.toLowerCase().includes(search.toLowerCase())
+    bank.name.toLowerCase().includes(search.toLowerCase()) &&
+    (selectedRegion === 'all' || bank.region === selectedRegion)
   );
+
+  // Group banks by region for display
+  const groupedBanks = filteredBanks.reduce((acc, bank) => {
+    const region = bank.region;
+    if (!acc[region]) acc[region] = [];
+    acc[region].push(bank);
+    return acc;
+  }, {});
 
   if (!isOpen) return null;
 
@@ -83,14 +167,14 @@ const BankSelectionModal = ({ isOpen, onClose, onSelect, connectedBanks }) => {
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.9, y: 20 }}
-        className="bg-slate-900 rounded-2xl p-6 max-w-md w-full max-h-[80vh] overflow-hidden border border-slate-700"
+        className="bg-slate-900 rounded-2xl p-6 max-w-lg w-full max-h-[85vh] overflow-hidden border border-slate-700"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-xl font-bold text-white">Connect Your Bank</h2>
-            <p className="text-slate-400 text-sm">Securely link your financial accounts</p>
+            <p className="text-slate-400 text-sm">50+ banks across 10 countries</p>
           </div>
           <motion.button
             whileHover={{ scale: 1.1 }}
@@ -102,6 +186,26 @@ const BankSelectionModal = ({ isOpen, onClose, onSelect, connectedBanks }) => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </motion.button>
+        </div>
+
+        {/* Region filter */}
+        <div className="flex flex-wrap gap-1.5 mb-4">
+          {REGIONS.map((region) => (
+            <motion.button
+              key={region.id}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setSelectedRegion(region.id)}
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors flex items-center gap-1 ${
+                selectedRegion === region.id
+                  ? 'bg-seedling-500 text-white'
+                  : 'bg-slate-800 text-slate-400 hover:text-white'
+              }`}
+            >
+              <span>{region.flag}</span>
+              <span className="hidden sm:inline">{region.id === 'all' ? 'All' : region.id}</span>
+            </motion.button>
+          ))}
         </div>
 
         {/* Search */}
@@ -119,20 +223,25 @@ const BankSelectionModal = ({ isOpen, onClose, onSelect, connectedBanks }) => {
         </div>
 
         {/* Bank list */}
-        <div className="space-y-2 max-h-[400px] overflow-y-auto">
+        <div className="space-y-2 max-h-[350px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
           {filteredBanks.map((bank) => (
             <motion.button
               key={bank.id}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => onSelect(bank)}
-              className="w-full p-4 rounded-xl bg-slate-800 hover:bg-slate-700 flex items-center gap-4 transition-colors"
+              className="w-full p-3 rounded-xl bg-slate-800 hover:bg-slate-700 flex items-center gap-3 transition-colors"
             >
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${bank.color} flex items-center justify-center`}>
-                <span className="text-2xl">{bank.logo}</span>
+              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${bank.color} flex items-center justify-center`}>
+                <span className="text-xl">{bank.logo}</span>
               </div>
-              <span className="text-white font-medium">{bank.name}</span>
-              <svg className="w-5 h-5 text-slate-500 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="flex-1 text-left">
+                <div className="text-white font-medium flex items-center gap-2">
+                  {bank.name}
+                  <span className="text-sm">{bank.flag}</span>
+                </div>
+              </div>
+              <svg className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </motion.button>
@@ -140,7 +249,7 @@ const BankSelectionModal = ({ isOpen, onClose, onSelect, connectedBanks }) => {
 
           {filteredBanks.length === 0 && (
             <div className="text-center py-8 text-slate-500">
-              No banks found matching "{search}"
+              {search ? `No banks found matching "${search}"` : 'No banks available in this region'}
             </div>
           )}
         </div>
