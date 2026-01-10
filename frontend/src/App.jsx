@@ -202,7 +202,7 @@ function AppContent() {
         return <ARWealthGarden simulation={result} />;
 
       case 'voice':
-        return <VoiceControl simulation={result} onCommand={(cmd) => console.log('Voice command:', cmd)} />;
+        return <VoiceControl simulation={result} onSimulationUpdate={handleSimulation} />;
 
       case 'collaborate':
         return <CollaborativePlanning simulation={result} />;
